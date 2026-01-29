@@ -19,7 +19,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chatroom", chatRoomRoutes);
 
 app.get("/", (_req, res) => {
-  res.json({ status: "Proximity API running" });
+  res.json({ status: "Proxima API running" });
 });
 
 const httpServer = createServer(app);

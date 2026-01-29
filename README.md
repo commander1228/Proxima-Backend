@@ -1,6 +1,6 @@
-# Proximity Backend
+# Proxima Backend
 
-This is the backend for the Proximity chat application. It provides:
+This is the backend for the Proxima chat application. It provides:
 
 - **User authentication** (JWT-based, with access and refresh tokens)
 - **REST API** for registration, login, chatroom management, and message retrieval
