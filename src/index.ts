@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth";
 import chatRoomRoutes from "./routes/chatRoom";
 import { setupSocket } from "./websocket/setupSocket";
 import helmet from "helmet";
+import logger from "./utils/logger";
 import { Request, Response, NextFunction } from "express";
 
 dotenv.config();
@@ -60,5 +61,5 @@ const io = new Server(httpServer, {
 setupSocket(io);
 
 httpServer.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  logger.info(`Server running on http://localhost:${PORT}`);
 });
