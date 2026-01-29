@@ -26,7 +26,7 @@ export async function create(req: Request, res: Response){
 export async function list(req: Request, res: Response){
     try {
         const chatRoomList = await listChatRooms();
-        res.status(201).json(chatRoomList);
+        res.status(200).json(chatRoomList);
     } catch (error: any) {
         res.status(400).json({ message: error.message});
     }
