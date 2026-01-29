@@ -6,6 +6,7 @@ import { createServer } from "http";
 import authRoutes from "./routes/auth";
 import chatRoomRoutes from "./routes/chatRoom";
 import { setupSocket } from "./websocket/setupSocket";
+import helmet from "helmet";
 
 dotenv.config();
 
@@ -29,6 +30,8 @@ app.use(
     credentials: true,
   })
 );
+app.use(cors());
+app.use(helmet());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
