@@ -25,6 +25,7 @@ import { Request, Response, NextFunction } from "express";
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 8000;
 
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
