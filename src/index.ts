@@ -6,15 +6,57 @@ import { createServer } from "http";
 import authRoutes from "./routes/auth";
 import chatRoomRoutes from "./routes/chatRoom";
 import { setupSocket } from "./websocket/setupSocket";
+import helmet from "helmet";
+import logger from "./utils/logger";
+import rateLimit from "express-rate-limit";
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many requests from this IP, please try again later."
+  }
+});
+
+import { Request, Response, NextFunction } from "express";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim());
 
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
+app.use(helmet());
+app.use(express.json());
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+
+
+
+app.use("/api/", apiLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/chatroom", chatRoomRoutes);
 
@@ -26,12 +68,13 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Adjust as needed for security
-    methods: ["GET", "POST"]
-  }
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 setupSocket(io);
 
 httpServer.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  logger.info(`Server running on http://localhost:${PORT}`);
 });
