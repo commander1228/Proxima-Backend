@@ -16,7 +16,7 @@ export function setupSocket(io: Server) {
         return next(new Error("User no longer exists"));
       }
 
-      (socket as any).user = user;
+      socket.user = user;
       next();
     } catch (err) {
       next(new Error("Invalid or expired token"));
@@ -24,10 +24,14 @@ export function setupSocket(io: Server) {
   });
 
   io.on("connection", (socket) => {
-    const user = (socket as any).user;
+    const user = socket.user;
+     if (!user) {
+        return (new Error("User no longer exists"));
+      }
+
     console.log(`User ${user.displayId} connected via WebSocket`);
 
-    setupChatSocket(io,socket);
+    setupChatSocket(io,socket,user);
 
     socket.on("disconnect", () => {
       console.log(`User ${user.displayId} disconnected`);

@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { User } from "@prisma/client";
 import {
   createMessage,
   getChatRoomById,
@@ -11,9 +12,7 @@ function getUserCount(io: Server, roomId: string) {
   return room ? room.size : 0;
 }
 
-export function setupChatSocket(io: Server, socket: Socket) {
-  const user = (socket as any).user;
-
+export function setupChatSocket(io: Server, socket: Socket, user: User) {
   socket.on("joinRoom", async (roomId: number) => {
     const chatRoom = await getChatRoomById(roomId);
     if (!chatRoom) {

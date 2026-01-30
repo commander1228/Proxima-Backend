@@ -17,6 +17,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
         return res.status(403).json({message: "user no longer exists"})
     }
 
+    (req as any).user = user;
     next();
   } catch (err) {
     return res.status(403).json({ message: "Invalid or expired token" });
