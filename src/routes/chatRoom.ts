@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { authenticateToken } from "../middleware/authMiddleware";
+import {
+  authenticateToken,
+  authenticateAdmin,
+} from "../middleware/authMiddleware";
 import { create, list } from "../controllers/chatRoomController";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
@@ -17,6 +20,7 @@ router.post(
       .withMessage("Chat room name must be 3-32 chars"),
     validateRequest,
   ],
+  authenticateAdmin,
   create,
 );
 router.get("/list", list);

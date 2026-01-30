@@ -3,13 +3,11 @@ import { PrismaClient, User } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function createChatRoom(name: string, user: User) {
-  if (await !user.isAdmin) {
-    throw new Error("user does not have permission");
-  }
   const existing = await prisma.chatRoom.findUnique({ where: { name } });
   if (existing) throw new Error("A Chatroom of this name already exists");
+  const creatorId = user.id;
   return prisma.chatRoom.create({
-    data: { name },
+    data: { name, creatorId },
   });
 }
 

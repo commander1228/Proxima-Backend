@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  email     String    @unique
-  displayId String    @unique
-  isAdmin   Boolean   @default(false)
+  id        Int        @id @default(autoincrement())
+  createdAt DateTime   @default(now())
+  email     String     @unique
+  displayId String     @unique
+  isAdmin   Boolean    @default(false)
   password  String
   messages  Message[]
+  chatRooms ChatRoom[]
 }
 
 model ChatRoom {
   id        Int       @id @default(autoincrement())
   createdAt DateTime  @default(now())
   name      String    @unique
+  creatorId Int?
+  creator   User?     @relation(fields: [creatorId], references: [id])
   messages  Message[]
 }
 
