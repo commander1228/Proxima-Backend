@@ -1,13 +1,12 @@
-import { PrismaClient } from '@prisma/client';
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import {
+  createUser,
   getUserByEmail,
+  getUserById,
   userExists,
-  genNewAccessToken,
-} from "../utils/userUtils";
-
-const prisma = new PrismaClient();
+} from "../services/userService";
+import { User } from "@prisma/client";
 
 export async function registerUser(
   email: string,
@@ -20,19 +19,13 @@ export async function registerUser(
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  return prisma.user.create({
-    data: {
-      email,
-      displayId,
-      password: hashedPassword,
-    },
-  });
+  return await createUser(email, displayId, hashedPassword);
 }
 
 export async function loginUser(email: string, password: string) {
   const user = await getUserByEmail(email);
 
-  if (!user) {
+  if (!user || user.deleted) {
     throw new Error("incorrect credentials");
   }
 
@@ -41,32 +34,78 @@ export async function loginUser(email: string, password: string) {
     throw new Error("incorrect credentials");
   }
 
-  const accessToken = jwt.sign(
-    { userId: user.id, email: user.email },
-    process.env.JWT_SECRET as string,
-    { expiresIn: "15m" },
-  );
-
-  const refreshToken = jwt.sign(
-    { userId: user.id, email: user.email },
-    process.env.JWT_REFRESH_SECRET as string,
-    { expiresIn: "7d" },
-  );
+  const accessToken = await genAccessTokenFromUser(user);
+  const refreshToken = await genRefreshTokenFromUser(user);
 
   return { email: user.email, accessToken, refreshToken };
 }
 
 export async function refreshAccessToken(refreshToken: string) {
   try {
+    const user = await userFromRefreshToken(refreshToken);
+
+    if (!user || user.deleted) {
+      throw new Error("user does not exist");
+    }
+
+    const newAccessToken = await genAccessTokenFromUser(user);
+
+    return await {accessToken: newAccessToken};
+  } catch (err) {
+    throw new Error("invalid refresh token");
+  }
+}
+
+export async function genAccessTokenFromUser(user: User) {
+  return jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "15m" },
+  );
+}
+
+export async function genRefreshTokenFromUser(user: User) {
+  return jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_REFRESH_SECRET as string,
+    { expiresIn: "7d" },
+  );
+}
+
+export async function userFromAccessToken(token: string) {
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      userId: number;
+      email: string;
+    };
+
+    const user = await getUserById(payload.userId);
+
+    if (!user) {
+      throw new Error("user does not exist");
+    }
+
+    return user;
+  } catch (error) {
+    throw new Error("invalid token");
+  }
+}
+
+export async function userFromRefreshToken(token: string) {
+  try {
     const payload = jwt.verify(
-      refreshToken,
+      token,
       process.env.JWT_REFRESH_SECRET as string,
     ) as { userId: number; email: string };
 
-    const newAccessToken = await genNewAccessToken(payload.userId);
+    const user = await getUserById(payload.userId);
 
-    return { accessToken: newAccessToken };
-  } catch (err) {
-    throw new Error("invalid refresh token");
+    if (!user) {
+      throw new Error("user does not exist");
+    }
+
+    return user;
+  } catch (error) {
+    throw new Error("invalid token");
   }
 }

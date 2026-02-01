@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { userFromAccessToken } from "../utils/userUtils";
+import { userFromAccessToken } from "../services/authService"
 
 export async function authenticateToken(
   req: Request,
@@ -16,11 +16,11 @@ export async function authenticateToken(
   try {
     const user = await userFromAccessToken(token);
 
-    if (!user) {
+    if (!user || user.deleted == true) {
       return res.status(403).json({ message: "user no longer exists" });
     }
 
-    (req as any).user = user;
+    req.user = user;
     next();
   } catch (err) {
     return res.status(403).json({ message: "Invalid or expired token" });

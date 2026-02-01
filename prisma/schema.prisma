@@ -11,7 +11,7 @@ model User {
   id        Int        @id @default(autoincrement())
   createdAt DateTime   @default(now())
   email     String     @unique
-  displayId String     @unique
+  displayId String
   isAdmin   Boolean    @default(false)
   password  String
   deleted   Boolean    @default(false)
@@ -22,7 +22,7 @@ model User {
 model ChatRoom {
   id        Int       @id @default(autoincrement())
   createdAt DateTime  @default(now())
-  name      String    @unique
+  name      String
   deleted   Boolean   @default(false)
   creatorId Int?
   creator   User?     @relation(fields: [creatorId], references: [id])

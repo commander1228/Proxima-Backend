@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import authRoutes from "./routes/auth";
 import chatRoomRoutes from "./routes/chatRoom";
+import userRoutes from "./routes/user";
 import { setupSocket } from "./websocket/setupSocket";
 import helmet from "helmet";
 import logger from "./utils/logger";
@@ -60,6 +61,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.use("/api/", apiLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/chatroom", chatRoomRoutes);
+app.use("/api/user", userRoutes );
 
 app.get("/", (_req, res) => {
   res.json({ status: "Proxima API running" });

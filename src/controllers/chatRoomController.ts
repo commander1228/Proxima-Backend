@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createRoom, listChatRooms, deleteRoom } from "../services/chatRoomService";
+import { createRoom, listChatRooms, deleteRoom, getChatRoomById } from "../services/chatRoomService";
 
 export async function createChatRoom(req: Request, res: Response) {
   try {
@@ -16,21 +16,21 @@ export async function createChatRoom(req: Request, res: Response) {
 
     const createdChatRoom = await createRoom(name, user);
     const chatRoomList = await listChatRooms();
-    res.status(201).json({
+    return res.status(201).json({
       message: `chatroom: ${name} has been created`, 
       chatRoomList,
     });
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 }
 
 export async function list(req: Request, res: Response) {
   try {
     const chatRoomList = await listChatRooms();
-    res.status(200).json(chatRoomList);
+   return res.status(200).json(chatRoomList);
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 }
 
@@ -38,15 +38,19 @@ export async function deleteChatRoom(req: Request, res: Response){
   try{
     const { id } = req.body;
 
+    if(!getChatRoomById(id)){
+      return res.status(400).json({ message: "Chat room does not exist" });
+    }
+
+
     const results = await deleteRoom(id)
     const chatRoomList = await listChatRooms();
 
-
-    res.status(201).json({
+    return res.status(201).json({
       message: `chatRoom: ${results.chatRoomName} has been deleted along with ${results.deletedCount} containted messages`,
       chatRoomList,
     })
   } catch (error: any){
-    res.status(400).json({ message: error.message });
+    return res.status(400).json({ message: error.message });
   }
 }

@@ -1,71 +1,52 @@
-import { PrismaClient, User, ChatRoom } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { User, Message } from "@prisma/client";
+import {
+  deleteMessagesByChatroom,
+  getLastestMessagesByChatRoom,
+} from "./messageService";
+import {
+  createRoomDao,
+  deleteChatRoomDao,
+  getAllChatRoomsDao,
+  getChatRoomByIdDao,
+  getChatRoomByNameDao,
+} from "../dao/chatRoomDao";
 
 export async function createRoom(name: string, user: User) {
-  const existing = await prisma.chatRoom.findUnique({ where: { name } });
-  if (existing) throw new Error("A Chatroom of this name already exists");
-  const creatorId = user.id;
-  return prisma.chatRoom.create({
-    data: { name, creatorId },
-  });
+  if (await chatRoomNameExists(name))
+    throw new Error("A Chatroom of this name already exists");
+  return await createRoomDao(name, user.id);
 }
 
-export async function deleteRoom( id:number){
-  const chatRoom : ChatRoom | null = await prisma.chatRoom.findUnique({ where: { id } });
-  if(!chatRoom) throw new Error("Chatroom does not exist");
-
-  await prisma.chatRoom.update({ where: {id : chatRoom.id },
-  data: {deleted: true},
-  });
-
-  const deleteResult = await prisma.message.updateMany({ where: {chatRoomId : chatRoom.id},
-  data: {deleted: true},
-  })
+export async function deleteRoom(id: number) {
+  const chatroom = await getChatRoomById(id);
+  if (!chatroom) throw new Error("Chatroom does not exist");
+  await deleteChatRoomDao(id);
+  const deleteResult = await deleteMessagesByChatroom(id);
 
   return {
     deletedCount: deleteResult.count,
-    chatRoomName: chatRoom.name,
-  }
+    chatRoomName: chatroom.name,
+  };
 }
 
 export async function listChatRooms() {
-  return prisma.chatRoom.findMany({
-    select: { id: true, name: true },
-    orderBy: { createdAt: "desc" },
-  });
+  return await getAllChatRoomsDao();
 }
 
 export async function getChatRoomById(id: number) {
-  return prisma.chatRoom.findUnique({
-    where: { id },
-  });
+  return await getChatRoomByIdDao(id);
 }
 
-export async function getLastFiftyMessages(chatRoomId: number) {
-  return prisma.message.findMany({
-    where: { chatRoomId },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: {
-      sender: { select: { displayId: true } },
-    },
-  });
+export async function chatRoomNameExists(name: string) {
+  const exists = await getChatRoomByNameDao(name);
+  return !!exists;
 }
 
-export async function createMessage(
-  chatRoomId: number,
-  senderId: number,
-  content: string,
-) {
-  return prisma.message.create({
-    data: {
-      chatRoomId,
-      senderId,
-      content,
-    },
-    include: {
-      sender: { select: { displayId: true } },
-    },
-  });
+export async function getLastFiftyMessages(chatRoomId: number, userId: number) {
+  const messages = await getLastestMessagesByChatRoom(chatRoomId, 50);
+
+  return messages.map((message: Message) => ({
+    ...message,
+    isOwnMessage: message.senderId == userId,
+  }));
 }

@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { userFromAccessToken } from "../utils/userUtils";
+import { userFromAccessToken } from "../services/authService";
 import { setupChatSocket } from "./chatRoomSocket";
 import { Socket } from "socket.io-client";
 

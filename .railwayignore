@@ -1,0 +1,29 @@
+# .railwayignore
+
+# Ignore all test files and folders
+tests
+**/*.test.*
+**/*.spec.*
+src/tests
+__tests__/
+coverage
+
+# Ignore Jest config and output
+jest.config.js
+jest.config.ts
+jest.setup.js
+jest.setup.ts
+coverage/
+*.snap
+
+# Ignore Jest packages (if present in your root)
+jest
+jest-*
+
+# Ignore local node_modules (Railway will install dependencies itself)
+node_modules
+
+# Optionally ignore other dev files
+.vscode
+.env.local
+.DS_Store
