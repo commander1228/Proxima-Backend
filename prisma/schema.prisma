@@ -8,35 +8,37 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  createdAt DateTime   @default(now())
-  email     String     @unique
-  displayId String
-  isAdmin   Boolean    @default(false)
-  password  String
-  deleted   Boolean    @default(false)
-  messages  ChatRoomMessage[]
-  chatRooms ChatRoom[]
+  id                Int                @id @default(autoincrement())
+  createdAt         DateTime           @default(now())
+  email             String             @unique
+  displayId         String
+  isAdmin           Boolean            @default(false)
+  password          String
+  deleted           Boolean            @default(false)
+  ChatRoomMessages  ChatRoomMessage[]
+  ProximityMessages ProximityMessage[]
+
+  chatRooms   ChatRoom[]
   preferences User_Settings?
 }
 
-model User_Settings{
-  id Int @id @default(autoincrement())
-  userId Int @unique
-  broadcastRadius Int @default(2)
-  recieveRadius Int @default(2)
-  user User? @relation(fields: [userId], references: [id])
+model User_Settings {
+  id              Int   @id @default(autoincrement())
+  userId          Int   @unique
+  proximityRadius Int   @default(2)
+  user            User? @relation(fields: [userId], references: [id])
 }
 
 model ChatRoom {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
+  id        Int               @id @default(autoincrement())
+  createdAt DateTime          @default(now())
   name      String
-  deleted   Boolean   @default(false)
+  deleted   Boolean           @default(false)
   creatorId Int?
   latitude  Float?
   longitude Float?
-  creator   User?     @relation(fields: [creatorId], references: [id])
+  size      Int               @default(0)
+  creator   User?             @relation(fields: [creatorId], references: [id])
   messages  ChatRoomMessage[]
 }
 
@@ -49,4 +51,15 @@ model ChatRoomMessage {
   deleted    Boolean  @default(false)
   chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
   sender     User     @relation(fields: [senderId], references: [id])
+}
+
+model ProximityMessage {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  content   String
+  senderId  Int
+  deleted   Boolean  @default(false)
+  latitude  Float
+  longitude Float
+  sender    User     @relation(fields: [senderId], references: [id])
 }

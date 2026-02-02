@@ -7,6 +7,7 @@ import {
   userExists,
 } from "../services/userService";
 import { User } from "@prisma/client";
+import { UserWithPreferences } from "../models/userTypes";
 
 export async function registerUser(
   email: string,
@@ -72,7 +73,7 @@ export async function genRefreshTokenFromUser(user: User) {
   );
 }
 
-export async function userFromAccessToken(token: string) {
+export async function userFromAccessToken(token: string): Promise<UserWithPreferences> {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
       userId: number;

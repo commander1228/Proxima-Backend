@@ -1,4 +1,5 @@
 import redis from "./setupRedis";
+import { getDistance } from "geolib";
 
 const USER_LOCATIONS_KEY = "user:locations";
 
@@ -6,16 +7,13 @@ const USER_LOCATIONS_KEY = "user:locations";
 export async function saveUserLocation(
   userId: number,
   location: { latitude: number; longitude: number },
-  userPreferences?: { broadcastRadius?: number, recieveRadius?: number }
+  proximityRadius: number,
 ) {
   await redis.geoadd(
     USER_LOCATIONS_KEY,
     location.longitude,
     location.latitude,
     String(userId),
-    userPreferences?.broadcastRadius ?? 2,
-    userPreferences?.recieveRadius ?? 2,
-
   );
 }
 
@@ -31,16 +29,45 @@ export async function getNearbyUsers(
   latitude: number,
   longitude: number,
   radius: number,
-) {
-  // Returns array of userIds
-  return await redis.georadius(
+): Promise<number[]> {
+  const userIds = await redis.georadius(
     USER_LOCATIONS_KEY,
     longitude,
     latitude,
     radius,
     "m",
-  );
+  ) as string[];
+  return userIds.map(Number);
 }
+
+export async function filterMutuallyNearbyUsers(
+  userId: number,
+  currentUserLocation: { latitude: number; longitude: number },
+  nearbyUserIds: number[],
+  userSocketMap: { [userId: number]: { proximityRadius: number } },
+) {
+  const mutuallyNearby: number[] = [];
+  for (const userId of nearbyUserIds) {
+    const nearbyUserLocation = await getUserLocation(String(userId));
+    const nearbyUserRadius = userSocketMap[userId]?.proximityRadius ?? 2;
+    if (!nearbyUserLocation) continue;
+
+    const distance = getDistance(
+      { latitude: nearbyUserLocation.latitude, longitude: nearbyUserLocation.longitude },
+      {
+        latitude: currentUserLocation.latitude,
+        longitude: currentUserLocation.longitude,
+      },
+    );
+
+    if (distance <= nearbyUserRadius) {
+      mutuallyNearby.push(userId);
+    }
+  }
+  return String(mutuallyNearby);
+}
+
+
 
 export async function getNearbyUsersCount(userId: number, radius: number) {
   const location = await getUserLocation(String(userId));
