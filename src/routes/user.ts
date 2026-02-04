@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
-import { changeUsername, deleteUser } from "../controllers/userController";
+import { changeUsername, deleteUser, userDetails } from "../controllers/userController";
 
 const router = Router();
 
@@ -22,5 +22,7 @@ router.post(
   validateRequest,
   changeUsername,
 );
+
+router.post("/me",userDetails);
 
 export default router;

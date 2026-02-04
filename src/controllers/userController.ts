@@ -19,7 +19,9 @@ export async function deleteUser(req: Request, res: Response) {
     }
 
     if (!user) {
-      return res.status(401).json({ message: "request from user that does not exist" });
+      return res
+        .status(401)
+        .json({ message: "request from user that does not exist" });
     }
 
     if (user.id != userId && !user.isAdmin) {
@@ -43,17 +45,40 @@ export async function changeUsername(req: Request, res: Response) {
     const user = req.user;
 
     if (!user) {
-      return res.status(401).json({ message: "request from user that does not exist" });
+      return res
+        .status(401)
+        .json({ message: "request from user that does not exist" });
     }
 
-    if (await(userNameInUse(newUserName))){
-        return res.status(409).json({ message: "Username already in use"})
+    if (await userNameInUse(newUserName)) {
+      return res.status(409).json({ message: "Username already in use" });
     }
 
     await setUserDisplayId(newUserName, user);
 
     return res.status(201).json({
       message: `userName has been changed to ${newUserName}`,
+    });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+export async function userDetails(req: Request, res: Response) {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "request from user that does not exist" });
+    }
+
+    return res.status(200).json({
+      username: user.displayId,
+      email: user.email,
+      created: user.createdAt,
+      message: "user details retrieved",
     });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
