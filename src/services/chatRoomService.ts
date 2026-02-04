@@ -1,8 +1,7 @@
-import { User, Message } from "@prisma/client";
+import { User, ChatRoomMessage } from "@prisma/client";
 import {
-  deleteMessagesByChatroom,
-  getLastestMessagesByChatRoom,
-} from "./messageService";
+  ChatRoomMessageService,
+} from "./ChatRoomMessageService";
 import {
   createRoomDao,
   deleteChatRoomDao,
@@ -10,6 +9,8 @@ import {
   getChatRoomByIdDao,
   getChatRoomByNameDao,
 } from "../dao/chatRoomDao";
+
+const chatRoomMessageService = new ChatRoomMessageService();
 
 export async function createRoom(name: string, user: User) {
   if (await chatRoomNameExists(name))
@@ -21,7 +22,7 @@ export async function deleteRoom(id: number) {
   const chatroom = await getChatRoomById(id);
   if (!chatroom) throw new Error("Chatroom does not exist");
   await deleteChatRoomDao(id);
-  const deleteResult = await deleteMessagesByChatroom(id);
+  const deleteResult = await chatRoomMessageService.deleteChatRoomMessagesByChatroom(id);
 
   return {
     deletedCount: deleteResult.count,
@@ -43,9 +44,9 @@ export async function chatRoomNameExists(name: string) {
 }
 
 export async function getLastFiftyMessages(chatRoomId: number, userId: number) {
-  const messages = await getLastestMessagesByChatRoom(chatRoomId, 50);
+  const messages = await chatRoomMessageService.getLatestChatRoomMessagesByChatRoom(chatRoomId, 50);
 
-  return messages.map((message: Message) => ({
+  return messages.map((message: ChatRoomMessage) => ({
     ...message,
     isOwnMessage: message.senderId == userId,
   }));

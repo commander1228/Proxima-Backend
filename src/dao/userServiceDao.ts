@@ -5,9 +5,15 @@ export async function createUserDao(
   displayId: string,
   password: string,
 ) {
-  return prisma.user.create({
+  const createdUser = prisma.user.create({
     data: { email, displayId, password },
   });
+
+  const createUserSettings = prisma.user_Settings.create({
+    data: {userId : (await createdUser).id},
+  });
+
+  return createdUser;
 }
 
 export async function setUserDeletedDao(id: number) {
@@ -25,7 +31,10 @@ export async function setUserDisplayIdDao(name: string, id: number){
 }
 
 export async function getUserByIdDao(id: number) {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({ 
+    where: { id },
+    include: { preferences : true},
+   });
 }
 
 export async function getUserByEmailDao(email: string) {

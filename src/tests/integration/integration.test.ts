@@ -5,7 +5,7 @@ import userRouter from '../../routes/user';
 import chatRoomRouter from '../../routes/chatRoom';
 import prisma from '../../utils/prisma';
 import { genAccessTokenFromUser } from '../../services/authService';
-import { User } from '@prisma/client';
+import { ChatRoomMessage, User } from '@prisma/client';
 
 const flushPromises = () => new Promise(process.nextTick);
 
@@ -27,7 +27,7 @@ describe('Integration Tests: Auth, User, ChatRoom', () => {
     app.use('/auth', authRouter);
     app.use('/user', userRouter);
     app.use('/chat', chatRoomRouter);
-    await prisma.message.deleteMany({});
+    await prisma.chatRoomMessage.deleteMany({});
     await prisma.chatRoom.deleteMany({});
     await prisma.user.deleteMany({});
     user = await prisma.user.create({
@@ -54,7 +54,7 @@ describe('Integration Tests: Auth, User, ChatRoom', () => {
   });
 
   afterAll(async () => {
-    await prisma.message.deleteMany({});
+    await prisma.chatRoomMessage.deleteMany({});
     await prisma.chatRoom.deleteMany({});
     await prisma.user.deleteMany({});
     await prisma.$disconnect();

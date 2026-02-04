@@ -1,22 +1,20 @@
 import { Server, Socket } from "socket.io";
-import { Message, User } from "@prisma/client";
+import { ChatRoomMessage, User } from "@prisma/client";
 import {
   getChatRoomById,
   getLastFiftyMessages,
 } from "../services/chatRoomService";
-import {
-  createMessage,
-  deleteMessage,
-  getMessageById,
-} from "../services/messageService";
-import { getUserByDisplayId } from "../services/userService";
+import { ChatRoomMessageService } from "../services/ChatRoomMessageService";
 
 function getUserCount(io: Server, roomId: string) {
   const room = io.sockets.adapter.rooms.get(roomId);
   return room ? room.size : 0;
 }
 
-export function setupChatSocket(io: Server, socket: Socket, user: User) {
+const chatRoomMessageService = new ChatRoomMessageService();
+
+export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
+
   socket.on("joinRoom", async (roomId: number) => {
     const chatRoom = await getChatRoomById(roomId);
     if (!chatRoom) {
@@ -55,7 +53,7 @@ export function setupChatSocket(io: Server, socket: Socket, user: User) {
 
   socket.on("sendMessage", async ({ roomId, content }) => {
     try {
-      const message = await createMessage(roomId, user.id, content);
+      const message = await chatRoomMessageService.createChatRoomMessage(roomId, user.id, content);
 
       const messageToSend = {
         ...message,
@@ -75,7 +73,7 @@ export function setupChatSocket(io: Server, socket: Socket, user: User) {
 
   socket.on("deleteMessage", async ({ roomId, messageId }) => {
     try {
-      const message = await getMessageById(messageId);
+      const message = await chatRoomMessageService.getMessageById(messageId);
 
       if (!message) {
         return socket.emit("error", "Message not found");
@@ -85,9 +83,9 @@ export function setupChatSocket(io: Server, socket: Socket, user: User) {
         return socket.emit("error", "Action not Authorized");
       }
 
-      await deleteMessage(message);
+      await chatRoomMessageService.deleteMessage(messageId);
 
-      const updatedMessage = await getMessageById(messageId);
+      const updatedMessage = await chatRoomMessageService.getMessageById(messageId);
 
       io.to(String(roomId)).emit("updateMessage", updatedMessage);
     } catch (error: any) {

@@ -1,0 +1,12 @@
+# Use official Redis image from Docker Hub
+FROM redis:7.2.4
+
+# Expose default Redis port
+EXPOSE 6379
+
+# No additional configuration needed for basic setup
+# For custom config, copy your redis.conf here and add:
+# COPY redis.conf /usr/local/etc/redis/redis.conf
+# CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+CMD ["redis-server"]
