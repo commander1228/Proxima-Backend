@@ -35,7 +35,7 @@ export async function getNearbyUsers(
     longitude,
     latitude,
     radius,
-    "m",
+    "mi",
   ) as string[];
   return userIds.map(Number);
 }
