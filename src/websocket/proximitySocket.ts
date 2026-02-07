@@ -73,13 +73,16 @@ export function setupProximitySocket(
           isOwnMessage: message.senderId == user.id,
         };
 
+
         const nearbyUsers = await getNearbyUsers(
           currentUserLocation.latitude,
           currentUserLocation.longitude,
           user.preferences?.proximityRadius ?? 2,
         );
+        console.log("[sendProximityMessage] nearbyUsers:", nearbyUsers);
+        console.log("[sendProximityMessage] userSocketMap:", userSocketMap);
 
-        if (!nearbyUsers) {
+        if (!nearbyUsers || nearbyUsers.length === 0) {
           console.warn("[sendProximityMessage] No nearby users found", { userId: user.id });
           return socket.emit("error", "no one nearby");
         }
@@ -90,7 +93,8 @@ export function setupProximitySocket(
           nearbyUsers,
           userSocketMap,
         );
-        console.log("[sendProximityMessage] Broadcasting to users:", usersToBroadCastTo ,  content);
+        console.log("[sendProximityMessage] usersToBroadCastTo (mutuallyNearby socketIds):", usersToBroadCastTo);
+        console.log("[sendProximityMessage] Broadcasting message content:", content);
 
         if (Array.isArray(usersToBroadCastTo)) {
           usersToBroadCastTo.forEach(socketId => {
