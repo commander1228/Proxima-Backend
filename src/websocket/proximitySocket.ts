@@ -45,15 +45,22 @@ export function setupProximitySocket(
     "sendProximityMessage",
     async ({ latitude, longitude, content }) => {
       try {
+        console.log("[sendProximityMessage] Received:", { latitude, longitude, content, userId: user.id });
         const message = await proximityMessageService.createProximityMessage(
+          user.id,
+          content,
           latitude,
           longitude,
-          content,
-          user.id,
         );
+        if (!message) {
+          console.error("[sendProximityMessage] Failed to create message", { userId: user.id, content, latitude, longitude });
+          return socket.emit("error", "Failed to create proximity message");
+        }
+        console.log("[sendProximityMessage] Created message:", message);
 
         const currentUserLocation = await getUserLocation(String(user.id));
         if (!currentUserLocation) {
+          console.error("[sendProximityMessage] No user location found", { userId: user.id });
           return socket.emit("error", "Action not Authorized");
         }
 
@@ -73,6 +80,7 @@ export function setupProximitySocket(
         );
 
         if (!nearbyUsers) {
+          console.warn("[sendProximityMessage] No nearby users found", { userId: user.id });
           return socket.emit("error", "no one nearby");
         }
 
@@ -82,12 +90,14 @@ export function setupProximitySocket(
           nearbyUsers,
           userSocketMap,
         );
+        console.log("[sendProximityMessage] Broadcasting to users:", usersToBroadCastTo);
 
         io.to(usersToBroadCastTo).emit(
           "receiveProximityMessage",
           messageToSend,
         );
       } catch (error: any) {
+        console.error("[sendProximityMessage] Error:", error);
         socket.emit("error", "An unexpected error has occured");
       }
     },
