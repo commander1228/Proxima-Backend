@@ -77,7 +77,7 @@ export function setupProximitySocket(
         const nearbyUsers = await getNearbyUsers(
           currentUserLocation.latitude,
           currentUserLocation.longitude,
-          user.preferences?.proximityRadius ?? 2,
+          user.preferences?.proximityRadius ?? 20,
         );
         console.log("[sendProximityMessage] nearbyUsers:", nearbyUsers);
         console.log("[sendProximityMessage] userSocketMap:", userSocketMap);
