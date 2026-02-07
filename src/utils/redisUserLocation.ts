@@ -44,12 +44,12 @@ export async function filterMutuallyNearbyUsers(
   userId: number,
   currentUserLocation: { latitude: number; longitude: number },
   nearbyUserIds: number[],
-  userSocketMap: { [userId: number]: { proximityRadius: number } },
+  userSocketMap: { [userId: number]: { socketId: string; proximityRadius: number } },
 ) {
   const mutuallyNearby: number[] = [];
-  for (const userId of nearbyUserIds) {
-    const nearbyUserLocation = await getUserLocation(String(userId));
-    const nearbyUserRadius = userSocketMap[userId]?.proximityRadius ?? 2;
+  for (const id of nearbyUserIds) {
+    const nearbyUserLocation = await getUserLocation(String(id));
+    const nearbyUserRadius = userSocketMap[id]?.proximityRadius ?? 2;
     if (!nearbyUserLocation) continue;
 
     const distance = getDistance(
@@ -61,10 +61,13 @@ export async function filterMutuallyNearbyUsers(
     );
 
     if (distance <= nearbyUserRadius) {
-      mutuallyNearby.push(userId);
+      mutuallyNearby.push(id);
     }
   }
-  return String(mutuallyNearby);
+  // Map user IDs to socket IDs and filter out any undefined
+  return mutuallyNearby
+    .map(id => userSocketMap[id]?.socketId)
+    .filter(Boolean);
 }
 
 

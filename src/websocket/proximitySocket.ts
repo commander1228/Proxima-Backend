@@ -90,7 +90,7 @@ export function setupProximitySocket(
           nearbyUsers,
           userSocketMap,
         );
-        console.log("[sendProximityMessage] Broadcasting to users:", usersToBroadCastTo);
+        console.log("[sendProximityMessage] Broadcasting to users:", usersToBroadCastTo ,  content);
 
         if (Array.isArray(usersToBroadCastTo)) {
           usersToBroadCastTo.forEach(socketId => {
