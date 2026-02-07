@@ -6,6 +6,7 @@ import {
   getUserByEmailDao,
   getUserByIdDao,
   setUserDisplayIdDao,
+  updateUserProximityRadius,
 } from "../dao/userServiceDao";
 
 export async function createUser(
@@ -22,6 +23,17 @@ export async function setUserDeleted(user: User) {
 
 export async function setUserDisplayId(name : string, user : User){
 return await setUserDisplayIdDao(name, user.id);
+}
+
+export async function setUserProximityRadius(userId:number,newRadius: number){
+  if(newRadius >= 999999){
+    throw new Error("Radius value too large");
+  }
+  if(newRadius <= 10){
+    throw new Error("Radius value too small");
+  }
+
+  return await updateUserProximityRadius(userId,newRadius);
 }
 
 export async function userExists(

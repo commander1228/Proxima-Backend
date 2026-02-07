@@ -44,3 +44,10 @@ export async function getUserByEmailDao(email: string) {
 export async function getUserByDisplayIdDao(displayId: string) {
   return prisma.user.findFirst({ where: { displayId, deleted: false } });
 }
+
+export async function updateUserProximityRadius(id: number, radius: number) {
+  return await prisma.user_Settings.update({
+    where: {userId: id},
+    data: {proximityRadius: radius},
+  })
+}

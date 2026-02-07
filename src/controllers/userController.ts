@@ -6,6 +6,7 @@ import {
   setUserDisplayId,
   userNameInUse,
 } from "../services/userService";
+import { updateUserProximityRadius } from "../dao/userServiceDao";
 
 export async function deleteUser(req: Request, res: Response) {
   try {
@@ -32,7 +33,7 @@ export async function deleteUser(req: Request, res: Response) {
 
     return res.status(201).json({
       message: `user ${userToDelete.displayId} has been deleted`,
-      userToDelete,
+      deletedUser,
     });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
@@ -85,3 +86,37 @@ export async function userDetails(req: Request, res: Response) {
     return res.status(400).json({ message: error.message });
   }
 }
+
+
+export async function changeUserProximityRadius(req: Request, res: Response) {
+  try {
+    const {newProximityRadius} = req.body;
+    const user = req.user;
+
+    if (typeof newProximityRadius !== "number"){
+      throw new Error("Radius must be a number");
+    }
+    
+  if(newProximityRadius >= 999999){
+  throw new Error("Radius value too large");
+  }
+  if(newProximityRadius <= 10){
+    throw new Error("Radius value too small");
+  }
+
+  if(!user){
+    return res
+        .status(401)
+        .json({ message: "request from user that does not exist" });
+  }
+
+  await updateUserProximityRadius(user.id, newProximityRadius);
+
+  return res.status(200).json({
+    message: `user proximity radius setting has been changed to ${newProximityRadius}`
+  });
+} catch (error: any) {
+    return res.status(400).json({ message: error.message });
+}
+}
+
