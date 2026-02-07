@@ -49,7 +49,7 @@ export async function filterMutuallyNearbyUsers(
   const mutuallyNearby: number[] = [];
   for (const id of nearbyUserIds) {
     const nearbyUserLocation = await getUserLocation(String(id));
-    const nearbyUserRadius = userSocketMap[id]?.proximityRadius ?? 16000;
+    const nearbyUserRadius = 804670;
     if (!nearbyUserLocation) continue;
 
     const distance = getDistance(
