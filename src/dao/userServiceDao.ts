@@ -10,7 +10,7 @@ export async function createUserDao(
   });
 
   const createUserSettings = prisma.user_Settings.create({
-    data: {userId : (await createdUser).id},
+    data: {userId : (await createdUser).id, proximityRadius: 1600},
   });
 
   return createdUser;
