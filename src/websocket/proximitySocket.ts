@@ -27,12 +27,11 @@ export function setupProximitySocket(
       await saveUserLocation(
         user.id,
         { latitude, longitude },
-        user.preferences?.proximityRadius ?? 500,
       );
 
       return getNearbyUsersCount(
         user.id,
-        user.preferences?.proximityRadius ?? 500,
+        userSocketMap[user.id]?.proximityRadius ?? 10000,
       ).then((count) => {
         socket.emit("nearbyUserCount", { count });
       });

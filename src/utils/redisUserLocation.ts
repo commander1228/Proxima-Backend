@@ -7,7 +7,6 @@ const USER_LOCATIONS_KEY = "user:locations";
 export async function saveUserLocation(
   userId: number,
   location: { latitude: number; longitude: number },
-  proximityRadius: number,
 ) {
   await redis.geoadd(
     USER_LOCATIONS_KEY,
@@ -35,7 +34,7 @@ export async function getNearbyUsers(
     longitude,
     latitude,
     radius,
-    "mi",
+    "m",
   ) as string[];
   return userIds.map(Number);
 }
@@ -49,7 +48,7 @@ export async function filterMutuallyNearbyUsers(
   const mutuallyNearby: number[] = [];
   for (const id of nearbyUserIds) {
     const nearbyUserLocation = await getUserLocation(String(id));
-    const nearbyUserRadius = 804670;
+    const nearbyUserRadius = userSocketMap[id]?.proximityRadius ?? 804670;
     if (!nearbyUserLocation) continue;
 
     const distance = getDistance(
