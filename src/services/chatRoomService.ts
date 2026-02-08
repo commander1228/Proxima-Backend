@@ -12,10 +12,10 @@ import {
 
 const chatRoomMessageService = new ChatRoomMessageService();
 
-export async function createRoom(name: string, user: User) {
+export async function createRoom(name: string, user: User,latitude?: number, longitude?: number, size?: number) {
   if (await chatRoomNameExists(name))
     throw new Error("A Chatroom of this name already exists");
-  return await createRoomDao(name, user.id);
+  return await createRoomDao(name, user.id, longitude, latitude, size);
 }
 
 export async function deleteRoom(id: number) {

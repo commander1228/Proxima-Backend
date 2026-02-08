@@ -1,3 +1,4 @@
+import { ChatRoom } from "@prisma/client";
 import redis from "./setupRedis";
 import { getDistance } from "geolib";
 
@@ -29,21 +30,50 @@ export async function getNearbyUsers(
   longitude: number,
   radius: number,
 ): Promise<number[]> {
-  const userIds = await redis.georadius(
+  const userIds = (await redis.georadius(
     USER_LOCATIONS_KEY,
     longitude,
     latitude,
     radius,
     "m",
-  ) as string[];
+  )) as string[];
   return userIds.map(Number);
+}
+
+export async function userInRange(
+  userLatitude: number,
+  userLongitude: number,
+  chatRoom: ChatRoom,
+) {
+  if (
+    chatRoom.latitude == null ||
+    chatRoom.longitude == null ||
+    chatRoom.size == null ||
+    userLatitude == null ||
+    userLongitude == null
+  ) {
+    throw new Error(
+      "ChatRoom or user location is missing latitude, longitude, or size",
+    );
+  }
+
+  const distance = getDistance(
+    { latitude: Number(userLatitude), longitude: Number(userLongitude) },
+    {
+      latitude: Number(chatRoom.latitude),
+      longitude: Number(chatRoom.longitude),
+    },
+  );
+  return distance <= chatRoom.size;
 }
 
 export async function filterMutuallyNearbyUsers(
   userId: number,
   currentUserLocation: { latitude: number; longitude: number },
   nearbyUserIds: number[],
-  userSocketMap: { [userId: number]: { socketId: string; proximityRadius: number } },
+  userSocketMap: {
+    [userId: number]: { socketId: string; proximityRadius: number };
+  },
 ) {
   const mutuallyNearby: number[] = [];
   for (const id of nearbyUserIds) {
@@ -52,7 +82,10 @@ export async function filterMutuallyNearbyUsers(
     if (!nearbyUserLocation) continue;
 
     const distance = getDistance(
-      { latitude: nearbyUserLocation.latitude, longitude: nearbyUserLocation.longitude },
+      {
+        latitude: nearbyUserLocation.latitude,
+        longitude: nearbyUserLocation.longitude,
+      },
       {
         latitude: currentUserLocation.latitude,
         longitude: currentUserLocation.longitude,
@@ -65,11 +98,9 @@ export async function filterMutuallyNearbyUsers(
   }
   // Map user IDs to socket IDs and filter out any undefined
   return mutuallyNearby
-    .map(id => userSocketMap[id]?.socketId)
+    .map((id) => userSocketMap[id]?.socketId)
     .filter(Boolean);
 }
-
-
 
 export async function getNearbyUsersCount(userId: number, radius: number) {
   const location = await getUserLocation(String(userId));

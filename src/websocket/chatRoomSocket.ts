@@ -5,6 +5,7 @@ import {
   getLastFiftyMessages,
 } from "../services/chatRoomService";
 import { ChatRoomMessageService } from "../services/ChatRoomMessageService";
+import { getUserLocation, userInRange } from "../utils/redisUserLocation";
 
 function getUserCount(io: Server, roomId: string) {
   const room = io.sockets.adapter.rooms.get(roomId);
@@ -14,12 +15,28 @@ function getUserCount(io: Server, roomId: string) {
 const chatRoomMessageService = new ChatRoomMessageService();
 
 export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
-
   socket.on("joinRoom", async (roomId: number) => {
     const chatRoom = await getChatRoomById(roomId);
     if (!chatRoom) {
       socket.emit("error", "Chat room not found");
       return;
+    }
+
+    if (chatRoom.longitude && chatRoom.latitude && chatRoom.size) {
+      const isUserInRange = await userInRange(
+        (
+          await getUserLocation(String(user.id))
+        )?.latitude!,
+        (
+          await getUserLocation(String(user.id))
+        )?.longitude!,
+        chatRoom,
+      );
+
+      if (!isUserInRange) {
+        socket.emit("error", "You are out of range to join this chat room");
+        return;
+      }
     }
 
     socket.join(String(roomId));
@@ -53,7 +70,11 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
 
   socket.on("sendMessage", async ({ roomId, content }) => {
     try {
-      const message = await chatRoomMessageService.createChatRoomMessage(roomId, user.id, content);
+      const message = await chatRoomMessageService.createChatRoomMessage(
+        roomId,
+        user.id,
+        content,
+      );
 
       const messageToSend = {
         ...message,
@@ -85,7 +106,9 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
 
       await chatRoomMessageService.deleteMessage(messageId);
 
-      const updatedMessage = await chatRoomMessageService.getMessageById(messageId);
+      const updatedMessage = await chatRoomMessageService.getMessageById(
+        messageId,
+      );
 
       io.to(String(roomId)).emit("updateMessage", updatedMessage);
     } catch (error: any) {
