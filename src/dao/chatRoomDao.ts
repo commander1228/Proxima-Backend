@@ -1,8 +1,8 @@
 import prisma from "../utils/prisma";
 
-export async function createRoomDao(name: string, userId: number) {
+export async function createRoomDao(name: string, userId: number,longitude?: number, latitude?: number, size?: number) {
   return prisma.chatRoom.create({
-    data: { name, creatorId: userId },
+    data: { name, creatorId: userId, longitude, latitude, size },
   });
 }
 

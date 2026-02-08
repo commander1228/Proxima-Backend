@@ -3,7 +3,7 @@ import { createRoom, listChatRooms, deleteRoom, getChatRoomById } from "../servi
 
 export async function createChatRoom(req: Request, res: Response) {
   try {
-    const { name } = req.body;
+    const { name,latitude, longitude, size } = req.body;
     const user = req.user;
 
     if (!name) {
@@ -14,7 +14,7 @@ export async function createChatRoom(req: Request, res: Response) {
       throw new Error("invalid user");
     }
 
-    const createdChatRoom = await createRoom(name, user);
+    const createdChatRoom = await createRoom(name, user, latitude, longitude, size);
     const chatRoomList = await listChatRooms();
     return res.status(201).json({
       message: `chatroom: ${name} has been created`, 
