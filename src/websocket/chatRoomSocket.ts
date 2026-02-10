@@ -70,6 +70,21 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
     });
   });
 
+   socket.on("disconnecting", () => {
+    socket.rooms.forEach((roomId) => {
+      if (roomId !== socket.id) {
+        const userCount = getUserCount(io, roomId) - 1;
+        io.to(roomId).emit("userLeft", {
+          userCount,
+          displayId: user.displayId,
+          message: `${user.displayId} has left the room`,
+        });
+      }
+    });
+  });
+
+  
+
   socket.on("sendMessage", async ({ roomId, content }) => {
     try {
       const message = await chatRoomMessageService.createChatRoomMessage(
