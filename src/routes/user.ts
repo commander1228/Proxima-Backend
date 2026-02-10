@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
-import { changeUsername, changeUserProximityRadius, deleteUser, userDetails } from "../controllers/userController";
+import { changeUsername, changeUserProximityRadius, deleteUser, userDetails, userStatistics } from "../controllers/userController";
 
 const router = Router();
 
@@ -26,5 +26,8 @@ router.post(
 router.post("/changeProximityRadius",changeUserProximityRadius)
 
 router.get("/me",userDetails);
+
+router.get("/stats", userStatistics);
+
 
 export default router;

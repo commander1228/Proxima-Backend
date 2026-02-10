@@ -7,6 +7,7 @@ import {
   getUserByIdDao,
   setUserDisplayIdDao,
   updateUserProximityRadius,
+  updateUserKarmaDao,
 } from "../dao/userServiceDao";
 
 export async function createUser(
@@ -21,12 +22,15 @@ export async function setUserDeleted(user: User) {
   return await setUserDeletedDao(user.id);
 }
 
-export async function setUserDisplayId(name : string, user : User){
-return await setUserDisplayIdDao(name, user.id);
+export async function setUserDisplayId(name: string, user: User) {
+  return await setUserDisplayIdDao(name, user.id);
 }
 
-export async function setUserProximityRadius(userId:number,newRadius: number){
-  return await updateUserProximityRadius(userId,newRadius);
+export async function setUserProximityRadius(
+  userId: number,
+  newRadius: number,
+) {
+  return await updateUserProximityRadius(userId, newRadius);
 }
 
 export async function userExists(
@@ -51,4 +55,13 @@ export async function getUserByDisplayId(name: string) {
 export async function userNameInUse(name: string): Promise<boolean> {
   const user = await getUserByDisplayIdDao(name);
   return !!user && !user.deleted;
+}
+
+export async function updateUserKarma(userId: number, vote: number) {
+  return await updateUserKarmaDao(userId, vote);
+}
+
+export async function getUserKarma(userId: number) {
+  const user = await getUserById(userId);
+  return user?.karma;
 }

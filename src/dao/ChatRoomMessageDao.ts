@@ -35,6 +35,21 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
       .then((result) => result.count);
   }
 
+    async getMessagesByUser(senderId: number): Promise<ChatRoomMessage[]> {
+    return prisma.chatRoomMessage
+      .findMany({
+        where: { senderId: senderId },
+      });
+  }
+
+  async getMessageCountByUser(senderId: number): Promise<number> {
+    return prisma.chatRoomMessage
+      .findMany({
+        where: { senderId: senderId },
+      })
+      .then((result)=> result.length);
+  }
+
   async createChatRoomMessage(
     chatRoomId: number,
     senderId: number,
@@ -51,6 +66,18 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
       },
     });
   }
+
+  updateMessageKarma(messageId:number, karmaChange:number):Promise<ChatRoomMessage | null> {
+    return prisma.chatRoomMessage.update({
+      where: { id: messageId },
+      data: {
+        karma: {
+          increment: karmaChange,
+        },
+      },
+    });
+  }
+
 
   async deleteChatRoomMessagesByChatroom(chatroomId: number) {
     return prisma.chatRoomMessage.updateMany({

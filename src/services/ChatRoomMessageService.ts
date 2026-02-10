@@ -43,6 +43,10 @@ export class ChatRoomMessageService extends AbstractMessageService<ChatRoomMessa
     );
   }
 
+  updateMessageKarma(messageId:number, karmaChange:number):Promise<ChatRoomMessage | null> {
+   return chatRoomMessageDao.updateMessageKarma(messageId, karmaChange); 
+  }
+
   async getLatestChatRoomMessagesByChatRoom(
     chatRoomId: number,
     count: number,
@@ -64,5 +68,9 @@ export class ChatRoomMessageService extends AbstractMessageService<ChatRoomMessa
           : ChatRoomMessage.sender.displayId,
       },
     }));
+  }
+
+  async getMessageCountByUser(userId: number) {
+    return await chatRoomMessageDao.getMessageCountByUser(userId);
   }
 }

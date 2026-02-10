@@ -12,9 +12,11 @@ model User {
   createdAt         DateTime           @default(now())
   email             String             @unique
   displayId         String
+  karma             Int                @default(0)
   isAdmin           Boolean            @default(false)
   password          String
   deleted           Boolean            @default(false)
+  isVerified        Boolean            @default(false)
   ChatRoomMessages  ChatRoomMessage[]
   ProximityMessages ProximityMessage[]
 
@@ -46,6 +48,7 @@ model ChatRoomMessage {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
   content    String
+  karma      Int      @default(0)
   chatRoomId Int
   senderId   Int
   isReply    Boolean  @default(false)

@@ -6,6 +6,7 @@ import {
 } from "../services/chatRoomService";
 import { ChatRoomMessageService } from "../services/ChatRoomMessageService";
 import { getUserLocation, userInRange } from "../utils/redisUserLocation";
+import { updateUserKarma } from "../services/userService";
 
 function getUserCount(io: Server, roomId: string) {
   const room = io.sockets.adapter.rooms.get(roomId);
@@ -83,6 +84,7 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
         senderDisplayId: message.sender.displayId,
         timestamp: message.createdAt,
         messageId: message.id,
+        karma: message.karma,
         userId:user.id,
       };
 
@@ -116,5 +118,31 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
     }
   });
 
-  //todo eventually, add logic for deleting all of your message by the user, and add a edit message event
+  socket.on("voteMessage", async ({ roomId,messageId, vote }) => {
+    try{
+      const message = await chatRoomMessageService.getMessageById(messageId);
+      
+      if (!message) {
+        return socket.emit("error", "Message not found");
+      }
+
+      if(message.deleted == true){
+        return socket.emit("error", "Message is deleted");
+      }
+
+      if(vote!= 1 && vote != -1){
+        return socket.emit("error", "cant vote on a message by more than 1 or less than -1");
+      }
+
+      const updatedmessage = await chatRoomMessageService.updateMessageKarma(messageId,vote);
+
+      if(message.senderId != user.id ){
+        updateUserKarma(message.senderId,vote);
+      }
+
+      io.to(String(roomId)).emit("updateMessage", updatedmessage);
+    } catch (error: any) {
+      socket.emit("error", "An unexpected error has occured");
+    }
+  });
 }
