@@ -31,6 +31,15 @@ model User_Settings {
   user            User? @relation(fields: [userId], references: [id])
 }
 
+enum ChatRoomType {
+  NONE
+  CAMPUS
+  CITY
+  PARTY
+  EVENT
+  GLOBAL
+}
+
 model ChatRoom {
   id        Int               @id @default(autoincrement())
   createdAt DateTime          @default(now())
@@ -41,6 +50,7 @@ model ChatRoom {
   longitude Float?
   size      Int               @default(0)
   creator   User?             @relation(fields: [creatorId], references: [id])
+  type      ChatRoomType      @default(NONE)
   messages  ChatRoomMessage[]
 }
 

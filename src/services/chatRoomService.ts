@@ -1,4 +1,4 @@
-import { User, ChatRoomMessage } from "@prisma/client";
+import { User, ChatRoomMessage, ChatRoomType } from "@prisma/client";
 import {
   ChatRoomMessageService,
 } from "./ChatRoomMessageService";
@@ -12,10 +12,10 @@ import {
 
 const chatRoomMessageService = new ChatRoomMessageService();
 
-export async function createRoom(name: string, user: User,latitude?: number, longitude?: number, size?: number) {
+export async function createRoom(name: string, user: User,latitude?: number, longitude?: number, size?: number, type?: ChatRoomType) {
   if (await chatRoomNameExists(name))
     throw new Error("A Chatroom of this name already exists");
-  return await createRoomDao(name, user.id, longitude, latitude, size);
+  return await createRoomDao(name, user.id, longitude, latitude, size, type);
 }
 
 export async function deleteRoom(id: number) {
@@ -43,10 +43,15 @@ export async function chatRoomNameExists(name: string) {
   return !!exists;
 }
 
+export async function getChatRoomByType(type: ChatRoomType) {
+  return await getChatRoomByType(type)
+}
+
 export async function getLastFiftyMessages(chatRoomId: number, userId: number) {
   const messages = await chatRoomMessageService.getLatestChatRoomMessagesByChatRoom(chatRoomId, 50);
 
   return messages.map((message: ChatRoomMessage) => ({
     ...message,
+    isOwnMessage: message.senderId == userId,
   }));
 }
