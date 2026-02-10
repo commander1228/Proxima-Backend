@@ -2,11 +2,15 @@ import { Request, response, Response } from "express";
 import {
   getUserByDisplayId,
   getUserById,
+  getUserKarma,
   setUserDeleted,
   setUserDisplayId,
   userNameInUse,
 } from "../services/userService";
 import { updateUserProximityRadius } from "../dao/userServiceDao";
+import { ChatRoomMessageService } from "../services/ChatRoomMessageService";
+
+const chatRoomMessageService = new ChatRoomMessageService();
 
 export async function deleteUser(req: Request, res: Response) {
   try {
@@ -87,6 +91,24 @@ export async function userDetails(req: Request, res: Response) {
   }
 }
 
+export async function userStatistics(req: Request, res: Response) {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "request from user that does not exist" });
+    }
+
+    const messageCount = await chatRoomMessageService.getMessageCountByUser(user.id);
+    const userKarma = await getUserKarma(user.id);
+
+    return res.status(200).json({ messageCount, userKarma });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
 
 export async function changeUserProximityRadius(req: Request, res: Response) {
   try {

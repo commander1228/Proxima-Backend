@@ -69,4 +69,8 @@ export class ChatRoomMessageService extends AbstractMessageService<ChatRoomMessa
       },
     }));
   }
+
+  async getMessageCountByUser(userId: number) {
+    return await chatRoomMessageDao.getMessageCountByUser(userId);
+  }
 }
