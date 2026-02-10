@@ -23,16 +23,16 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
     }
 
     if (chatRoom.longitude && chatRoom.latitude && chatRoom.size) {
+      const userLocation = await getUserLocation(String(user.id));
+      if (!userLocation) {
+        socket.emit("error", "User location not found");
+        return;
+      }
       const isUserInRange = await userInRange(
-        (
-          await getUserLocation(String(user.id))
-        )?.latitude!,
-        (
-          await getUserLocation(String(user.id))
-        )?.longitude!,
+        userLocation.latitude,
+        userLocation.longitude,
         chatRoom,
       );
-
       if (!isUserInRange) {
         socket.emit("error", "You are out of range to join this chat room");
         return;
