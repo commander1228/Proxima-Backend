@@ -38,7 +38,7 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
     async getMessagesByUser(senderId: number): Promise<ChatRoomMessage[]> {
     return prisma.chatRoomMessage
       .findMany({
-        where: { senderId: senderId },
+        where: { senderId: senderId, deleted: false },
       });
   }
 

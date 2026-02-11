@@ -38,6 +38,7 @@ enum ChatRoomType {
   PARTY
   EVENT
   GLOBAL
+  BUILDING
 }
 
 model ChatRoom {
