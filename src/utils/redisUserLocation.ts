@@ -102,12 +102,22 @@ export async function filterMutuallyNearbyUsers(
     .filter(Boolean);
 }
 
+export async function removeUserLocation(userId: number) {
+  await redis.zrem(USER_LOCATIONS_KEY, String(userId));
+}
+
 export async function getNearbyUsersCount(userId: number, radius: number) {
   const location = await getUserLocation(String(userId));
   if (!location) return 0;
 
-  return (await getNearbyUsers(location.latitude, location.longitude, radius))
-    .length;
+  const nearbyUserIds = await getNearbyUsers(
+    location.latitude,
+    location.longitude,
+    radius
+  );
+
+  // this should exclude the querying user from the count
+  return nearbyUserIds.filter((id) => id !== userId).length;
 }
 
 //left off here

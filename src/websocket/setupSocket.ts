@@ -4,6 +4,7 @@ import { setupChatRoomSocket } from "./chatRoomSocket";
 import { UserWithPreferences } from "../models/userTypes";
 import { setupProximitySocket } from "./proximitySocket";
 import { User_Settings } from "@prisma/client";
+import { removeUserLocation } from "../utils/redisUserLocation";
 
 const userSocketMap : {[userId:number]: {
   socketId: string,
@@ -48,6 +49,7 @@ export function setupSocket(io: Server) {
 
     socket.on("disconnect", () => {
       delete userSocketMap[user.id]
+      removeUserLocation(user.id);
       console.log(`User ${user.displayId} disconnected`);
     });
   });
