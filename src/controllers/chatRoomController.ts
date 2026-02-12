@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { createRoom, listChatRooms, deleteRoom, getChatRoomById } from "../services/chatRoomService";
 import { ChatRoomType } from "@prisma/client";
+import { getNearbyUsers } from "../utils/redisUserLocation";
 
 export async function createChatRoom(req: Request, res: Response) {
   try {
@@ -61,4 +62,27 @@ export async function deleteChatRoom(req: Request, res: Response){
 
 export async function getChatRoomTypes(req: Request, res: Response) {
   return res.status(200).json({ types: Object.values(ChatRoomType) });
+}
+
+export async function listWithCounts(req: Request, res: Response) {
+  try {
+    const chatRoomList = await listChatRooms();
+
+    const withCounts = await Promise.all(
+      chatRoomList.map(async (room) => {
+        let nearbyCount = 0;
+
+        if (room.latitude != null && room.longitude != null && room.size > 0) {
+          const userIds = await getNearbyUsers(room.latitude, room.longitude, room.size);
+          nearbyCount = userIds.length;
+        }
+
+        return { ...room, nearbyCount };
+      })
+    );
+
+    return res.status(200).json(withCounts);
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
 }

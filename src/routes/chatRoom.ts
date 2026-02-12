@@ -3,7 +3,7 @@ import {
   authenticateToken,
   authenticateAdmin,
 } from "../middleware/authMiddleware";
-import { createChatRoom, list, deleteChatRoom, getChatRoomTypes } from "../controllers/chatRoomController";
+import { createChatRoom, list, deleteChatRoom, getChatRoomTypes, listWithCounts } from "../controllers/chatRoomController";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
 
@@ -27,6 +27,8 @@ router.post(
 router.post("/delete", authenticateAdmin, deleteChatRoom);
 
 router.get("/list", list);
+
+router.get("/map", listWithCounts);
 
 router.get("/types", getChatRoomTypes);
 

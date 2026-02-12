@@ -78,6 +78,20 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
     });
   }
 
+  async getVote(userId: number, messageId: number) {
+    return prisma.messageVote.findUnique({
+      where: { userId_messageId: { userId, messageId } },
+    });
+  }
+
+  async upsertVote(userId: number, messageId: number, value: number) {
+    return prisma.messageVote.upsert({
+      where: { userId_messageId: { userId, messageId } },
+      update: { value },
+      create: { userId, messageId, value },
+    });
+  }
+
 
   async deleteChatRoomMessagesByChatroom(chatroomId: number) {
     return prisma.chatRoomMessage.updateMany({

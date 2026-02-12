@@ -47,6 +47,14 @@ export class ChatRoomMessageService extends AbstractMessageService<ChatRoomMessa
    return chatRoomMessageDao.updateMessageKarma(messageId, karmaChange); 
   }
 
+  async getVote(userId: number, messageId: number) {
+    return chatRoomMessageDao.getVote(userId, messageId);
+  }
+
+  async upsertVote(userId: number, messageId: number, value: number) {
+    return chatRoomMessageDao.upsertVote(userId, messageId, value);
+  }
+
   async getLatestChatRoomMessagesByChatRoom(
     chatRoomId: number,
     count: number,

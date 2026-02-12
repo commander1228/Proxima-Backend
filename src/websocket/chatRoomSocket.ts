@@ -134,31 +134,52 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
     }
   });
 
-  socket.on("voteMessage", async ({ roomId,messageId, vote }) => {
-    try{
+  socket.on("voteMessage", async ({ roomId, messageId, vote }) => {
+    try {
       const message = await chatRoomMessageService.getMessageById(messageId);
-      
+
       if (!message) {
         return socket.emit("error", "Message not found");
       }
 
-      if(message.deleted == true){
+      if (message.deleted) {
         return socket.emit("error", "Message is deleted");
       }
 
-      if(vote!= 1 && vote != -1){
-        return socket.emit("error", "cant vote on a message by more than 1 or less than -1");
+      if (vote !== 1 && vote !== -1) {
+        return socket.emit("error", "Vote must be 1 or -1");
       }
 
-      const updatedmessage = await chatRoomMessageService.updateMessageKarma(messageId,vote);
-
-      if(message.senderId != user.id ){
-        updateUserKarma(message.senderId,vote);
+      if (message.senderId === user.id) {
+        return socket.emit("error", "Cannot vote on your own message");
       }
 
-      io.to(String(roomId)).emit("updateMessage", updatedmessage);
+      // Check for existing vote
+      const existingVote = await chatRoomMessageService.getVote(user.id, messageId);
+
+      if (existingVote && existingVote.value === vote) {
+        // Already voted the same direction — block
+        return socket.emit("error", "Already voted");
+      }
+
+      // Calculate the actual karma change:
+      //   No prior vote  → apply vote as-is (+1 or -1)
+      //   Switching vote → undo old vote + apply new (net change is ±2)
+      let karmaChange = vote;
+      if (existingVote) {
+        karmaChange = vote - existingVote.value; // e.g. 1 - (-1) = 2, or -1 - 1 = -2
+      }
+
+      // Save the vote record and update message karma
+      await chatRoomMessageService.upsertVote(user.id, messageId, vote);
+      const updatedMessage = await chatRoomMessageService.updateMessageKarma(messageId, karmaChange);
+
+      // Update the message author's karma
+      updateUserKarma(message.senderId, karmaChange);
+
+      io.to(String(roomId)).emit("updateMessage", updatedMessage);
     } catch (error: any) {
-      socket.emit("error", "An unexpected error has occured");
+      socket.emit("error", "An unexpected error has occurred");
     }
   });
 }

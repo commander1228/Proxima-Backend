@@ -19,6 +19,7 @@ model User {
   isVerified        Boolean            @default(false)
   ChatRoomMessages  ChatRoomMessage[]
   ProximityMessages ProximityMessage[]
+  MessageVotes      MessageVote[]
 
   chatRooms   ChatRoom[]
   preferences User_Settings?
@@ -56,17 +57,29 @@ model ChatRoom {
 }
 
 model ChatRoomMessage {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
+  id         Int            @id @default(autoincrement())
+  createdAt  DateTime       @default(now())
   content    String
-  karma      Int      @default(0)
+  karma      Int            @default(0)
   chatRoomId Int
   senderId   Int
-  isReply    Boolean  @default(false)
+  isReply    Boolean        @default(false)
   replyToId  Int?
-  deleted    Boolean  @default(false)
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
-  sender     User     @relation(fields: [senderId], references: [id])
+  deleted    Boolean        @default(false)
+  chatRoom   ChatRoom       @relation(fields: [chatRoomId], references: [id])
+  sender     User           @relation(fields: [senderId], references: [id])
+  votes      MessageVote[]
+}
+
+model MessageVote {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  messageId Int
+  value     Int             // 1 = upvote, -1 = downvote
+  user      User            @relation(fields: [userId], references: [id])
+  message   ChatRoomMessage @relation(fields: [messageId], references: [id])
+
+  @@unique([userId, messageId])
 }
 
 model ProximityMessage {
