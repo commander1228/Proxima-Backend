@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id                Int                @id @default(autoincrement())
-  createdAt         DateTime           @default(now())
-  email             String             @unique
-  displayId         String
-  karma             Int                @default(0)
-  isAdmin           Boolean            @default(false)
-  password          String
-  deleted           Boolean            @default(false)
-  isVerified        Boolean            @default(false)
-  ChatRoomMessages  ChatRoomMessage[]
-  ProximityMessages ProximityMessage[]
+  id                     Int                   @id @default(autoincrement())
+  createdAt              DateTime              @default(now())
+  email                  String                @unique
+  displayId              String
+  karma                  Int                   @default(0)
+  isAdmin                Boolean               @default(false)
+  password               String
+  deleted                Boolean               @default(false)
+  isVerified             Boolean               @default(false)
+  ChatRoomMessages       ChatRoomMessage[]
+  ProximityMessages      ProximityMessage[]
+  ChatRoomMessageUpvotes ChatRoomMessageVote[]
 
   chatRooms   ChatRoom[]
   preferences User_Settings?
@@ -56,17 +57,18 @@ model ChatRoom {
 }
 
 model ChatRoomMessage {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  content    String
-  karma      Int      @default(0)
-  chatRoomId Int
-  senderId   Int
-  isReply    Boolean  @default(false)
-  replyToId  Int?
-  deleted    Boolean  @default(false)
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
-  sender     User     @relation(fields: [senderId], references: [id])
+  id                     Int                   @id @default(autoincrement())
+  createdAt              DateTime              @default(now())
+  content                String
+  karma                  Int                   @default(0)
+  chatRoomId             Int
+  senderId               Int
+  isReply                Boolean               @default(false)
+  replyToId              Int?
+  deleted                Boolean               @default(false)
+  chatRoom               ChatRoom              @relation(fields: [chatRoomId], references: [id])
+  sender                 User                  @relation(fields: [senderId], references: [id])
+  ChatRoomMessageUpvotes ChatRoomMessageVote[]
 }
 
 model ProximityMessage {
@@ -78,4 +80,16 @@ model ProximityMessage {
   latitude  Float
   longitude Float
   sender    User     @relation(fields: [senderId], references: [id])
+}
+
+model ChatRoomMessageVote {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  messageId Int
+  value     Int
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id])
+  message   ChatRoomMessage @relation(fields: [messageId], references: [id])
+
+  @@unique([userId, messageId])
 }
