@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id                     Int                   @id @default(autoincrement())
-  createdAt              DateTime              @default(now())
-  email                  String                @unique
-  displayId              String
-  karma                  Int                   @default(0)
-  isAdmin                Boolean               @default(false)
-  password               String
-  deleted                Boolean               @default(false)
-  isVerified             Boolean               @default(false)
-  ChatRoomMessages       ChatRoomMessage[]
-  ProximityMessages      ProximityMessage[]
+  id                   Int                   @id @default(autoincrement())
+  createdAt            DateTime              @default(now())
+  email                String                @unique
+  displayId            String
+  karma                Int                   @default(0)
+  isAdmin              Boolean               @default(false)
+  password             String
+  deleted              Boolean               @default(false)
+  isVerified           Boolean               @default(false)
+  ChatRoomMessages     ChatRoomMessage[]
+  ProximityMessages    ProximityMessage[]
   ChatRoomMessageVotes ChatRoomMessageVote[]
 
   chatRooms   ChatRoom[]
@@ -42,6 +42,19 @@ enum ChatRoomType {
   BUILDING
 }
 
+enum BugReportType {
+  CRASH
+  UNEXPECTED
+  NETWORK_ERROR
+  RESOURCE_LOAD_FAIL
+}
+
+enum Platform {
+  IOS
+  ANDROID
+  OTHER
+}
+
 model ChatRoom {
   id        Int               @id @default(autoincrement())
   createdAt DateTime          @default(now())
@@ -57,16 +70,16 @@ model ChatRoom {
 }
 
 model ChatRoomMessage {
-  id                     Int                   @id @default(autoincrement())
-  createdAt              DateTime              @default(now())
-  content                String
-  chatRoomId             Int
-  senderId               Int
-  isReply                Boolean               @default(false)
-  replyToId              Int?
-  deleted                Boolean               @default(false)
-  chatRoom               ChatRoom              @relation(fields: [chatRoomId], references: [id])
-  sender                 User                  @relation(fields: [senderId], references: [id])
+  id                   Int                   @id @default(autoincrement())
+  createdAt            DateTime              @default(now())
+  content              String
+  chatRoomId           Int
+  senderId             Int
+  isReply              Boolean               @default(false)
+  replyToId            Int?
+  deleted              Boolean               @default(false)
+  chatRoom             ChatRoom              @relation(fields: [chatRoomId], references: [id])
+  sender               User                  @relation(fields: [senderId], references: [id])
   ChatRoomMessageVotes ChatRoomMessageVote[]
 }
 
@@ -91,4 +104,15 @@ model ChatRoomMessageVote {
   message   ChatRoomMessage @relation(fields: [messageId], references: [id])
 
   @@unique([userId, messageId])
+}
+
+model BugReport {
+  id           Int           @id @default(autoincrement())
+  createdAt    DateTime      @default(now())
+  Type         BugReportType
+  errorMessage String
+  platform     Platform
+  appVersion   Int
+  osVersion    Int
+  deviceModel  String
 }
