@@ -30,7 +30,7 @@ export function setupProximitySocket(
         user.id,
         userSocketMap[user.id]?.proximityRadius ?? 10000,
       );
-      socket.emit("nearbyUserCount", { count: nearbyCount - 1 });
+      socket.emit("nearbyUserCount", { count: nearbyCount });
     } catch (error: any) {
       socket.emit("error", "An unexpected error has occured");
     }
