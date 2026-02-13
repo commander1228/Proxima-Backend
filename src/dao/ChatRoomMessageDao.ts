@@ -67,17 +67,6 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
     });
   }
 
-  updateMessageKarma(messageId:number, karmaChange:number):Promise<ChatRoomMessage | null> {
-    return prisma.chatRoomMessage.update({
-      where: { id: messageId },
-      data: {
-        karma: {
-          increment: karmaChange,
-        },
-      },
-    });
-  }
-
 
   async deleteChatRoomMessagesByChatroom(chatroomId: number) {
     return prisma.chatRoomMessage.updateMany({
