@@ -175,10 +175,14 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
         return socket.emit("error", "You cannot vote on your own message");
       }
 
+      if(vote == 0){
+        await chatRoomMessageVoteService.removeVote(user.id,messageId)
+      }else{
+
       await chatRoomMessageVoteService.voteOnMessage(user.id, messageId, vote);
 
       await updateUserKarma(message.senderId, vote);
-
+      }
       const voteCount = await chatRoomMessageVoteService.getMessageVoteCount(
         messageId,
       );
