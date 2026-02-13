@@ -7,6 +7,7 @@ import {
 import { ChatRoomMessageService } from "../services/ChatRoomMessageService";
 import { getUserLocation, userInRange } from "../utils/redisUserLocation";
 import { updateUserKarma } from "../services/userService";
+import { ChatRoomMessageVoteService } from "../services/ChatRoomMessageVoteService";
 
 function getUserCount(io: Server, roomId: string) {
   const room = io.sockets.adapter.rooms.get(roomId);
@@ -14,6 +15,7 @@ function getUserCount(io: Server, roomId: string) {
 }
 
 const chatRoomMessageService = new ChatRoomMessageService();
+const chatRoomMessageVoteService = new ChatRoomMessageVoteService();
 
 export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
   socket.on("joinRoom", async (roomId: number) => {
@@ -65,12 +67,12 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
           displayId: user.displayId,
           message: `${user.displayId} has left the room`,
         });
-         socket.leave(roomId);
+        socket.leave(roomId);
       }
     });
   });
 
-   socket.on("disconnecting", () => {
+  socket.on("disconnecting", () => {
     socket.rooms.forEach((roomId) => {
       if (roomId !== socket.id) {
         const userCount = getUserCount(io, roomId) - 1;
@@ -82,8 +84,6 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
       }
     });
   });
-
-  
 
   socket.on("sendMessage", async ({ roomId, content }) => {
     try {
@@ -100,34 +100,34 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
         senderDisplayId: message.sender.displayId,
         timestamp: message.createdAt,
         messageId: message.id,
-        karma: message.karma,
-        userId:user.id,
+        userId: user.id,
       };
 
       const chatRoom = await getChatRoomById(roomId);
-    if (!chatRoom) {
-      socket.emit("error", "Chat room not found");
-      return;
-    }
-
-    if (chatRoom.longitude && chatRoom.latitude && chatRoom.size) {
-      const userLocation = await getUserLocation(String(user.id));
-      if (!userLocation) {
-        socket.emit("error", "User location not found");
+      if (!chatRoom) {
+        socket.emit("error", "Chat room not found");
         return;
       }
-      const isUserInRange = await userInRange(
-        userLocation.latitude,
-        userLocation.longitude,
-        chatRoom,
-      );
-      if (!isUserInRange) {
-        socket.emit("error", "You are out of range to send a message in this chat room");
-        return;
-      }
-    }
 
-      
+      if (chatRoom.longitude && chatRoom.latitude && chatRoom.size) {
+        const userLocation = await getUserLocation(String(user.id));
+        if (!userLocation) {
+          socket.emit("error", "User location not found");
+          return;
+        }
+        const isUserInRange = await userInRange(
+          userLocation.latitude,
+          userLocation.longitude,
+          chatRoom,
+        );
+        if (!isUserInRange) {
+          socket.emit(
+            "error",
+            "You are out of range to send a message in this chat room",
+          );
+          return;
+        }
+      }
 
       io.to(String(roomId)).emit("receiveMessage", messageToSend);
     } catch (error: any) {
@@ -159,29 +159,40 @@ export function setupChatRoomSocket(io: Server, socket: Socket, user: User) {
     }
   });
 
-  socket.on("voteMessage", async ({ roomId,messageId, vote }) => {
-    try{
+  socket.on("voteMessage", async ({ roomId, messageId, vote }) => {
+    try {
       const message = await chatRoomMessageService.getMessageById(messageId);
-      
+
       if (!message) {
         return socket.emit("error", "Message not found");
       }
 
-      if(message.deleted == true){
+      if (message.deleted == true) {
         return socket.emit("error", "Message is deleted");
       }
 
-      if(vote!= 1 && vote != -1){
-        return socket.emit("error", "cant vote on a message by more than 1 or less than -1");
+      if (message.senderId === user.id) {
+        return socket.emit("error", "You cannot vote on your own message");
       }
 
-      const updatedmessage = await chatRoomMessageService.updateMessageKarma(messageId,vote);
+      if(vote == 0){
+        await chatRoomMessageVoteService.removeVote(user.id,messageId)
+      }else{
 
-      if(message.senderId != user.id ){
-        updateUserKarma(message.senderId,vote);
+      await chatRoomMessageVoteService.voteOnMessage(user.id, messageId, vote);
+
+      await updateUserKarma(message.senderId, vote);
       }
+      const voteCount = await chatRoomMessageVoteService.getMessageVoteCount(
+        messageId,
+      );
 
-      io.to(String(roomId)).emit("updateMessage", updatedmessage);
+      const updatedMessage = {
+        ...message,
+        voteCount,
+      };
+
+      io.to(String(roomId)).emit("updateMessage", updatedMessage);
     } catch (error: any) {
       socket.emit("error", "An unexpected error has occured");
     }
