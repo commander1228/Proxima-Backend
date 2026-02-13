@@ -19,7 +19,7 @@ export async function createChatRoom(req: Request, res: Response) {
     }
     if(!type)
     {
-      const createdChatRoom = await createRoom(name, user, latitude, longitude, size, type);
+      const createdChatRoom = await createRoom(name, user, latitude, longitude, size, ChatRoomType.NONE);
     }else{
        const createdChatRoom = await createRoom(name, user, latitude, longitude, size, type);
     }
