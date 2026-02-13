@@ -40,7 +40,7 @@ export async function getNearbyUsers(
   return userIds.map(Number);
 }
 
-export async function userInRange(
+export async function userInRangeOfChatRoom(
   userLatitude: number,
   userLongitude: number,
   chatRoom: ChatRoom,
