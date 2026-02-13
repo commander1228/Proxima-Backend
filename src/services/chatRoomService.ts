@@ -9,8 +9,10 @@ import {
   getChatRoomByIdDao,
   getChatRoomByNameDao,
 } from "../dao/chatRoomDao";
+import { ChatRoomMessageVoteService } from "./ChatRoomMessageVoteService";
 
 const chatRoomMessageService = new ChatRoomMessageService();
+const chatRoomMessageVoteService = new ChatRoomMessageVoteService();
 
 export async function createRoom(name: string, user: User,latitude?: number, longitude?: number, size?: number, type?: ChatRoomType) {
   if (await chatRoomNameExists(name))
@@ -50,8 +52,15 @@ export async function getChatRoomByType(type: ChatRoomType) {
 export async function getLastFiftyMessages(chatRoomId: number, userId: number) {
   const messages = await chatRoomMessageService.getLatestChatRoomMessagesByChatRoom(chatRoomId, 50);
 
-  return messages.map((message: ChatRoomMessage) => ({
+  const voteCounts = await Promise.all (
+    messages.map((message) =>
+      chatRoomMessageVoteService.getMessageVoteCount(message.id)
+  )
+);
+
+  return messages.map((message: ChatRoomMessage,idx) => ({
     ...message,
     isOwnMessage: message.senderId == userId,
+    voteCount: voteCounts[idx]
   }));
 }

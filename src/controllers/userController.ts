@@ -135,7 +135,8 @@ export async function changeUserProximityRadius(req: Request, res: Response) {
   await updateUserProximityRadius(user.id, newProximityRadius);
 
   return res.status(200).json({
-    message: `user proximity radius setting has been changed to ${newProximityRadius}`
+    newProximityRadius: newProximityRadius,
+    message: `user proximity radius setting has been changed to ${newProximityRadius}`,
   });
 } catch (error: any) {
     return res.status(400).json({ message: error.message });
