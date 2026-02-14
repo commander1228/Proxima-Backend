@@ -26,6 +26,7 @@
     "prisma": "^6.19.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "resend": "^6.9.2",
     "socket.io": "^4.8.3",
     "socketio": "^1.0.0",
     "winston": "^3.19.0"

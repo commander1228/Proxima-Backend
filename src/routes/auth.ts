@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { register, login, refresh } from "../controllers/authController";
+import {
+  register,
+  login,
+  refresh,
+  sendOneTimeVerificationCode,
+  verifyCode,
+} from "../controllers/authController";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
 
@@ -32,6 +38,10 @@ router.post(
   ],
   login,
 );
+
+router.post("/send-code", sendOneTimeVerificationCode);
+
+router.post("verify-code", verifyCode);
 
 router.post("/refresh", refresh);
 

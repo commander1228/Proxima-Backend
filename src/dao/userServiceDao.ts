@@ -1,4 +1,4 @@
-import {prisma} from "../utils/prisma";
+import { prisma } from "../utils/prisma";
 
 export async function createUserDao(
   email: string,
@@ -10,7 +10,7 @@ export async function createUserDao(
   });
 
   const createUserSettings = await prisma.user_Settings.create({
-    data: { userId: createdUser.id},
+    data: { userId: createdUser.id },
   });
 
   return createdUser;
@@ -60,5 +60,12 @@ export async function updateUserKarmaDao(id: number, karmaChange: number) {
         increment: karmaChange,
       },
     },
+  });
+}
+
+export async function setUserVerifiedDao(id: number) {
+  return await prisma.user.update({
+    where: { id },
+    data: { isVerified: true },
   });
 }

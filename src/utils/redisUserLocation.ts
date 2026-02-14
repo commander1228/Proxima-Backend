@@ -1,7 +1,6 @@
-import { ChatRoom, Location,LocationType} from "@prisma/client";
+import { ChatRoom, Location, LocationType } from "@prisma/client";
 import redis from "./setupRedis";
 import { getDistance } from "geolib";
-
 
 const USER_LOCATIONS_KEY = "user:locations";
 
@@ -104,7 +103,7 @@ export async function filterMutuallyNearbyUsers(
 }
 
 export async function removeUserLocation(userId: number) {
-  try{
+  try {
     await redis.zrem(USER_LOCATIONS_KEY, String(userId));
   } catch (error) {
     console.error("Error removing user location:", error);
@@ -118,7 +117,7 @@ export async function getNearbyUsersCount(userId: number, radius: number) {
   const nearbyUserIds = await getNearbyUsers(
     location.latitude,
     location.longitude,
-    radius
+    radius,
   );
 
   // this should exclude the querying user from the count

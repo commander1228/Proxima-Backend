@@ -8,6 +8,7 @@ import {
   setUserDisplayIdDao,
   updateUserProximityRadius,
   updateUserKarmaDao,
+  setUserVerifiedDao,
 } from "../dao/userServiceDao";
 
 export async function createUser(
@@ -64,4 +65,8 @@ export async function updateUserKarma(userId: number, vote: number) {
 export async function getUserKarma(userId: number) {
   const user = await getUserById(userId);
   return user?.karma;
+}
+
+export async function setUserVerified(userId: number) {
+  return await setUserVerifiedDao(userId);
 }
