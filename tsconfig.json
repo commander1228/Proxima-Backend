@@ -13,9 +13,12 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["src/**/*", "src/types/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "typeRoots": ["@types", "./node_modules/@types"]
+  "ts-node": {
+    "files": true
+  }
 }
