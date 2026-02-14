@@ -26,7 +26,17 @@ export class PostService {
   }
 
   async getPostById(id: number) {
+    if (!id || Number.isNaN(id)) {
+      throw new Error("invalid post id");
+    }
     return await postDao.getPostById(id);
+  }
+
+  async getPostWithLocation(id:number) {
+    if (!id || Number.isNaN(id)) {
+      throw new Error("invalid post id");
+    }
+    return await postDao.getPostByIdWithLocation(id);
   }
 
   async getPostListByLocation(id:number){

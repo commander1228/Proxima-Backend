@@ -22,6 +22,16 @@ export class PostDao{
         });
     }
 
+    async getPostByIdWithLocation(id:number){
+        return prisma.post.findUnique({
+            where: {id},
+            include: {
+                poster: {select: {displayId: true , id: true}},
+                location : true
+            }
+        });
+    }
+
     async getPostsByLocation(locationId:number){
         return prisma.post.findMany({where: {locationId}});
     }
