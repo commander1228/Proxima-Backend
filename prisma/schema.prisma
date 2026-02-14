@@ -21,7 +21,6 @@ model User {
   ProximityMessages    ProximityMessage[]
   ChatRoomMessageVotes ChatRoomMessageVote[]
 
-  locations        Location[]
   preferences      User_Settings?
   FeedbackMessages FeedbackMessage[]
   posts            ForumPost[]
@@ -54,8 +53,6 @@ model Location {
   longitude Float?
   size      Int          @default(0)
   type      LocationType @default(NONE)
-  creatorId Int?
-  creator   User?        @relation(fields: [creatorId], references: [id])
   chatRooms ChatRoom[]
   forum     Forum?
 
