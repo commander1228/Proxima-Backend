@@ -1,15 +1,16 @@
 import prisma from "../utils/prisma";
-import { FeedbackMessage, FeedbackCategory } from "@prisma/client";
+import { FeedbackMessage, FeedbackCategory, Platform } from "@prisma/client";
 
 export class FeedbackDao {
   createFeedback(
     userId: number,
     category: FeedbackCategory,
     rating: number | null,
-    comment: string | null
+    comment: string | null,
+    platform: Platform | null
   ): Promise<FeedbackMessage> {
     return prisma.feedbackMessage.create({
-      data: { userId, category, rating, comment },
+      data: { userId, category, rating, comment,platform },
     });
   }
 

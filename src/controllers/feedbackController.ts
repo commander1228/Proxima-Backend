@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { FeedbackService } from "../services/FeedbackService";
-import { FeedbackCategory } from "@prisma/client";
+import { FeedbackCategory, Platform } from "@prisma/client";
 
 const feedbackService = new FeedbackService();
 
@@ -9,13 +9,14 @@ export async function submitFeedback(req: Request, res: Response) {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "unauthorized" });
 
-    const { rating, comment, category } = req.body as {
+    const { rating, comment, category,platform } = req.body as {
         rating?: number;
         comment?: string;
         category?: FeedbackCategory;
+        platform?: Platform;
     };
 
-    await feedbackService.submitFeedback(user.id, category ?? FeedbackCategory.OVERALL, rating, comment);
+    await feedbackService.submitFeedback(user.id, category ?? FeedbackCategory.OVERALL, rating, comment,platform);
 
     return res.status(200).json({ message: "feedback submitted" });
   } catch (error: any) {

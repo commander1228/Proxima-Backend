@@ -1,4 +1,4 @@
-import { FeedbackCategory } from "@prisma/client";
+import { FeedbackCategory, Platform } from "@prisma/client";
 import { FeedbackDao } from "../dao/FeedbackDao";
 
 const feedbackDao = new FeedbackDao();
@@ -8,7 +8,8 @@ export class FeedbackService {
     userId: number,
     category: FeedbackCategory,
     rating: number | undefined,
-    comment: string | undefined
+    comment: string | undefined,
+    platform:Platform | undefined
   ) {
     // not really sure if this is needed, but some documentations have used it
     const cleanComment = comment?.trim();
@@ -20,7 +21,8 @@ export class FeedbackService {
       userId,
       category,
       rating ?? null,
-      cleanComment ?? null
+      cleanComment ?? null,
+      platform ?? null
     );
   }
 }
