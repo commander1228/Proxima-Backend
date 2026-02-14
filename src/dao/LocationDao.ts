@@ -1,17 +1,13 @@
-import { LocationType } from "@prisma/client";
-import prisma from "../utils/prisma";
+import { LocationType, Location } from "@prisma/client";
+import {prisma, DB} from "../utils/prisma";
+import { CreateLocationInput } from "../models/locationTypes";
 
 export class LocationDao {
   async createLocation(
-    name: string,
-    latitude: number | null = null,
-    longitude: number | null = null,
-    size: number = 0,
-    type: LocationType,
-  ) {
-    return prisma.location.create({
-      data: { name, latitude, longitude, size, type },
-    });
+    db:DB= prisma,
+    data: CreateLocationInput
+  ):Promise<Location> {
+    return db.location.create({ data });
   }
 
   async deleteLocation(id: number) {

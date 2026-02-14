@@ -1,7 +1,7 @@
-import prisma from "../utils/prisma";
+import {prisma, DB} from "../utils/prisma";
 
-export async function createRoomDao(name: string, locationId: number) {
-  return prisma.chatRoom.create({
+export async function createRoomDao(name: string, locationId: number,db: DB = prisma) {
+  return db.chatRoom.create({
     data: { name, locationId },
   });
 }

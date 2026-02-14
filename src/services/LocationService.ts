@@ -1,6 +1,9 @@
-import { Location, LocationType } from "@prisma/client";
+
+import { ChatRoom, Location, LocationType } from "@prisma/client";
 import { LocationDao } from "../dao/LocationDao";
 import { listChatRooms } from "./chatRoomService";
+import {prisma} from "../utils/prisma";
+import { createRoomDao } from "../dao/chatRoomDao";
 
 const locationDao = new LocationDao();
 
@@ -11,7 +14,7 @@ export class LocationService {
     longitude: number | null = null,
     size: number = 0,
     type: LocationType = LocationType.NONE,
-  ): Promise<Location> {
+  ):Promise <{location: Location, defaultChatRoom: ChatRoom}>{
     if (!name) throw new Error("Location name is required");
 
     if (await this.isLocationNameInUse(name)) {
@@ -21,21 +24,44 @@ export class LocationService {
       await this.verifyGeo(latitude!, longitude!);
     }
 
-    return await locationDao.createLocation(
-      name,
-      latitude,
-      longitude,
-      size,
-      type,
-    );
-  }
+    try{
+        const result = await prisma.$transaction(async (tx) => {
+            const location = await locationDao.createLocation(tx,{name,latitude,longitude,size,type});
+            const room = await createRoomDao("General",location.id,tx);
+            return { location,defaultChatRoom: room}
+        });
+        return result;
+    }catch(error:any){
+        throw error;
+    }
+}
 
   async deleteLocation(id: number) {
     return await locationDao.deleteLocation(id);
   }
 
   async getLocationById(id: number) {
-    return await locationDao.getLocationById(id);
+    const location =  await locationDao.getLocationById(id);
+    if(location?.deleted == true || location == null){
+        throw new Error("location does not exist");
+    }
+    return location
+  }
+
+  async getLocationDetails(id: number) {
+    const location = await this.getLocationById(id);
+
+    const locationChatRooms = await listChatRooms(location.id);
+
+    return {
+        id: location.id,
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        size: location.size,
+        type: location.type,
+        chatRooms: locationChatRooms
+    }
   }
 
   async updateLocation(
