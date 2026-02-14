@@ -4,8 +4,10 @@ import { LocationDao } from "../dao/LocationDao";
 import { listChatRooms } from "./chatRoomService";
 import {prisma} from "../utils/prisma";
 import { createRoomDao } from "../dao/chatRoomDao";
+import { PostService } from "./PostService";
 
 const locationDao = new LocationDao();
+const postService = new PostService();
 
 export class LocationService {
   async createLocation(
@@ -52,6 +54,7 @@ export class LocationService {
     const location = await this.getLocationById(id);
 
     const locationChatRooms = await listChatRooms(location.id);
+    const locationPosts = await postService.getPostListByLocation(id);
 
     return {
         id: location.id,
@@ -60,7 +63,8 @@ export class LocationService {
         longitude: location.longitude,
         size: location.size,
         type: location.type,
-        chatRooms: locationChatRooms
+        chatRooms: locationChatRooms,
+        locationPosts: locationPosts
     }
   }
 

@@ -34,6 +34,4 @@ export class PostCommentService {
     async getPostCommentsByUser(userId:number){
         return await postCommentDao.getPostCommentsByUser(userId);
     }
-
-    
 }

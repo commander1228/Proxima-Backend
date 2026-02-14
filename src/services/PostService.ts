@@ -29,6 +29,29 @@ export class PostService {
     return await postDao.getPostById(id);
   }
 
+  async getPostListByLocation(id:number){
+    return await postDao.getPostsByLocation(id);
+  }
+
+  async getPostandPostCommentsById(id:number){
+    const post = await postDao.getPostById(id);
+    if(!post){
+      throw new Error("Cannot Find Post");
+    }
+
+    const comments = await postCommentService.getPostCommentsByPost(post.id);
+
+    return {
+      id:post.id,
+      title:post.title,
+      posterId: post.posterId,
+      posterDisplayId: post.poster.displayId,
+      createdAt: post.createdAt,
+      commentCount: comments.length,
+      comments,
+    };
+  }
+
   async getPostAndPostCommentsByLocation(id: number) {
     const posts = await postDao.getPostsByLocation(id);
 
