@@ -13,7 +13,7 @@ import { User } from "@prisma/client";
 import { UserWithPreferences } from "../models/userTypes";
 import redis from "../utils/setupRedis";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+const resend = new Resend(process.env.EMAIL_API_KEY!);
 const OTPValidTime = Number(process.env.OTP_TIL_SEC) || 300;
 const OTPMaxAttempts = Number(process.env.OTP_MAX_ATTEMPTS) || 300;
 const OTPRateLimit = Number(process.env.OTP_RATE_LIMIT) || 300;
