@@ -1,23 +1,29 @@
-import { User, ChatRoomMessage, ChatRoomType } from "@prisma/client";
+import { User, ChatRoomMessage } from "@prisma/client";
 import {
   ChatRoomMessageService,
 } from "./ChatRoomMessageService";
 import {
   createRoomDao,
   deleteChatRoomDao,
-  getAllChatRoomsDao,
+  getAllChatRoomsByLocationDao,
   getChatRoomByIdDao,
-  getChatRoomByNameDao,
+  getChatRoomByNameAndLocationDao,
 } from "../dao/chatRoomDao";
 import { ChatRoomMessageVoteService } from "./ChatRoomMessageVoteService";
+import { LocationDao } from "../dao/LocationDao";
 
 const chatRoomMessageService = new ChatRoomMessageService();
 const chatRoomMessageVoteService = new ChatRoomMessageVoteService();
+const locationDao = new LocationDao();
 
-export async function createRoom(name: string, user: User,latitude?: number, longitude?: number, size?: number, type?: ChatRoomType) {
-  if (await chatRoomNameExists(name))
+export async function createRoom(name: string, locationId:number) {
+  const location = await locationDao.getLocationById(locationId);
+
+  if (!location || location.deleted) throw new Error("Location does not exist");
+  
+  if (await chatRoomNameExistsInLocation(name,locationId))
     throw new Error("A Chatroom of this name already exists");
-  return await createRoomDao(name, user.id, longitude, latitude, size, type);
+  return await createRoomDao(name, locationId);
 }
 
 export async function deleteRoom(id: number) {
@@ -32,21 +38,17 @@ export async function deleteRoom(id: number) {
   };
 }
 
-export async function listChatRooms() {
-  return await getAllChatRoomsDao();
+export async function listChatRooms(locationId:number) {
+  return await getAllChatRoomsByLocationDao(locationId);
 }
 
 export async function getChatRoomById(id: number) {
   return await getChatRoomByIdDao(id);
 }
 
-export async function chatRoomNameExists(name: string) {
-  const exists = await getChatRoomByNameDao(name);
+export async function chatRoomNameExistsInLocation(name: string,locationId:number) {
+  const exists = await getChatRoomByNameAndLocationDao(name,locationId);
   return !!exists;
-}
-
-export async function getChatRoomByType(type: ChatRoomType) {
-  return await getChatRoomByType(type)
 }
 
 export async function getLastFiftyMessages(chatRoomId: number, userId: number) {

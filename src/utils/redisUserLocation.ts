@@ -1,6 +1,7 @@
-import { ChatRoom } from "@prisma/client";
+import { ChatRoom, Location,LocationType} from "@prisma/client";
 import redis from "./setupRedis";
 import { getDistance } from "geolib";
+
 
 const USER_LOCATIONS_KEY = "user:locations";
 
@@ -40,15 +41,15 @@ export async function getNearbyUsers(
   return userIds.map(Number);
 }
 
-export async function userInRangeOfChatRoom(
+export async function userInRangeOfLocation(
   userLatitude: number,
   userLongitude: number,
-  chatRoom: ChatRoom,
+  location: Location,
 ) {
   if (
-    chatRoom.latitude == null ||
-    chatRoom.longitude == null ||
-    chatRoom.size == null ||
+    location.latitude == null ||
+    location.longitude == null ||
+    location.size == null ||
     userLatitude == null ||
     userLongitude == null
   ) {
@@ -60,11 +61,11 @@ export async function userInRangeOfChatRoom(
   const distance = getDistance(
     { latitude: Number(userLatitude), longitude: Number(userLongitude) },
     {
-      latitude: Number(chatRoom.latitude),
-      longitude: Number(chatRoom.longitude),
+      latitude: Number(location.latitude),
+      longitude: Number(location.longitude),
     },
   );
-  return distance <= chatRoom.size;
+  return distance <= location.size;
 }
 
 export async function filterMutuallyNearbyUsers(

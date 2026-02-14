@@ -21,19 +21,20 @@ model User {
   ProximityMessages    ProximityMessage[]
   ChatRoomMessageVotes ChatRoomMessageVote[]
 
-  chatRooms        ChatRoom[]
   preferences      User_Settings?
   FeedbackMessages FeedbackMessage[]
+  posts            Post[]
+  postComments     PostComment[]
 }
 
 model User_Settings {
   id              Int   @id @default(autoincrement())
   userId          Int   @unique
-  proximityRadius Int   @default(2)
+  proximityRadius Int   @default(1600)
   user            User? @relation(fields: [userId], references: [id])
 }
 
-enum ChatRoomType {
+enum LocationType {
   NONE
   CAMPUS
   CITY
@@ -43,18 +44,60 @@ enum ChatRoomType {
   BUILDING
 }
 
-model ChatRoom {
-  id        Int               @id @default(autoincrement())
-  createdAt DateTime          @default(now())
+model Location {
+  id        Int          @id @default(autoincrement())
+  createdAt DateTime     @default(now())
   name      String
-  deleted   Boolean           @default(false)
-  creatorId Int?
+  deleted   Boolean      @default(false)
   latitude  Float?
   longitude Float?
-  size      Int               @default(0)
-  creator   User?             @relation(fields: [creatorId], references: [id])
-  type      ChatRoomType      @default(NONE)
-  messages  ChatRoomMessage[]
+  size      Int          @default(0)
+  type      LocationType @default(NONE)
+  chatRooms ChatRoom[]
+  posts     Post[]
+
+  @@index([latitude, longitude])
+  @@index([type])
+}
+
+model Post {
+  id         Int           @id @default(autoincrement())
+  createdAt  DateTime      @default(now())
+  title      String
+  content    String
+  posterId   Int
+  locationId Int
+  deleted    Boolean       @default(false)
+  location   Location      @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  poster     User          @relation(fields: [posterId], references: [id])
+  comments   PostComment[]
+
+  @@index(locationId)
+}
+
+model PostComment {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  content     String
+  postId      Int
+  commenterId Int
+  deleted     Boolean  @default(false)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commenter   User     @relation(fields: [commenterId], references: [id])
+
+  @@index(postId)
+}
+
+model ChatRoom {
+  id         Int               @id @default(autoincrement())
+  createdAt  DateTime          @default(now())
+  name       String
+  deleted    Boolean           @default(false)
+  locationId Int
+  location   Location          @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  messages   ChatRoomMessage[]
+
+  @@index([locationId])
 }
 
 model ChatRoomMessage {
@@ -66,9 +109,21 @@ model ChatRoomMessage {
   isReply              Boolean               @default(false)
   replyToId            Int?
   deleted              Boolean               @default(false)
-  chatRoom             ChatRoom              @relation(fields: [chatRoomId], references: [id])
+  chatRoom             ChatRoom              @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   sender               User                  @relation(fields: [senderId], references: [id])
   ChatRoomMessageVotes ChatRoomMessageVote[]
+}
+
+model ChatRoomMessageVote {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  messageId Int
+  value     Int
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   ChatRoomMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
 }
 
 model ProximityMessage {
@@ -110,16 +165,4 @@ model FeedbackMessage {
 
   @@index([category])
   @@index([userId])
-}
-
-model ChatRoomMessageVote {
-  id        Int             @id @default(autoincrement())
-  userId    Int
-  messageId Int
-  value     Int
-  createdAt DateTime        @default(now())
-  user      User            @relation(fields: [userId], references: [id])
-  message   ChatRoomMessage @relation(fields: [messageId], references: [id])
-
-  @@unique([userId, messageId])
 }

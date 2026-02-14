@@ -1,4 +1,4 @@
-import prisma from "../utils/prisma";
+import {prisma} from "../utils/prisma";
 import { ChatRoomMessage } from "@prisma/client";
 import { AbstractMessageDao } from "./abstractClasses/abstractMessageDao";
 

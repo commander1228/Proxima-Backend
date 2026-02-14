@@ -1,4 +1,4 @@
-import prisma from "../utils/prisma";
+import {prisma} from "../utils/prisma";
 
 export async function createUserDao(
   email: string,
@@ -10,7 +10,7 @@ export async function createUserDao(
   });
 
   const createUserSettings = await prisma.user_Settings.create({
-    data: { userId: createdUser.id, proximityRadius: 1600 },
+    data: { userId: createdUser.id},
   });
 
   return createdUser;

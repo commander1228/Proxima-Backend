@@ -1,6 +1,6 @@
 import { ProximityMessage } from "@prisma/client";
 import { AbstractMessageDao } from "./abstractClasses/abstractMessageDao";
-import prisma from "../utils/prisma";
+import {prisma} from "../utils/prisma";
 
 export class ProximityMessageDao extends AbstractMessageDao<ProximityMessage | null> {
   async getMessageById(messageId: number): Promise<ProximityMessage | null> {
