@@ -21,7 +21,7 @@ export async function authenticateToken(
     }
 
     if(!user.isVerified){
-      return res.status(403).json({ message: "user is not verified" });
+      return res.status(404).json({ message: "user is not verified" });
     }
 
     req.user = user;
