@@ -41,7 +41,7 @@ router.post(
 
 router.post("/send-code", sendOneTimeVerificationCode);
 
-router.post("verify-code", verifyCode);
+router.post("/verify-code", verifyCode);
 
 router.post("/refresh", refresh);
 
