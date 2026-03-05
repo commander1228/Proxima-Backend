@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createRoom, listChatRooms, deleteRoom, getChatRoomById } from "../services/chatRoomService";
+import { createRoom, listChatRooms, deleteRoom, getChatRoomById, getLastFiftyMessages } from "../services/chatRoomService";
 
 export async function createChatRoom(req: Request, res: Response) {
   try {
@@ -25,6 +25,19 @@ export async function createChatRoom(req: Request, res: Response) {
     });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
+  }
+}
+
+export async function getChatRoomMessages(req: Request, res: Response) {
+  try {
+    const roomId = Number(req.params.roomId);
+    if (!roomId || isNaN(roomId)) {
+      return res.status(400).json({ message: "Invalid room ID" });
+    }
+    const messages = await getLastFiftyMessages(roomId, req.user!.id);
+    return res.json({ messages });
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 }
 

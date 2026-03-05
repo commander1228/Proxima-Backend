@@ -3,20 +3,39 @@ import {
   authenticateToken,
   authenticateAdmin,
 } from "../middleware/authMiddleware";
-import { commentOnPost, createPost, postDetails, voteOnComment, voteOnPost } from "../controllers/postController";
+import { requireNotSuspended } from "../middleware/suspendMiddleware";
+import {
+  commentOnPost,
+  createPost,
+  postDetails,
+  voteOnComment,
+  voteOnPost,
+  deletePostVote,
+  deleteCommentVote,
+  deletePost,
+  deleteComment,
+} from "../controllers/postController";
 
 const router = Router();
 
 router.use(authenticateToken);
 
-router.post("/",createPost);
+// Write actions — blocked for suspended users
+router.post("/", requireNotSuspended, createPost);
+router.post("/:postId/comment", requireNotSuspended, commentOnPost);
 
-router.get("/:postId",postDetails);
+router.get("/:postId", postDetails);
 
-router.post("/vote/:postId",voteOnPost)
+router.post("/vote/comment/:id", voteOnComment);
+router.delete("/vote/comment/:id", deleteCommentVote);
 
-router.post("/:postId/comment",commentOnPost);
+router.post("/vote/:postId", voteOnPost);
+router.delete("/vote/:postId", deletePostVote);
 
-router.post("/vote/comment/:id",voteOnComment);
+// Delete own comment — must come before /:postId to avoid route conflict
+router.delete("/comment/:commentId", requireNotSuspended, deleteComment);
+
+// Must come after /vote routes and /comment route to avoid catching them
+router.delete("/:postId", requireNotSuspended, deletePost);
 
 export default router;

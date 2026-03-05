@@ -7,6 +7,9 @@ import {
   verifyOneTimeCode,
 } from "../services/authService";
 import { getUserByEmail } from "../services/userService";
+import { touchUserActivity } from "../notifications";
+import { setSession, clearSession, hasSession } from "../utils/redisSession";
+import { getIo } from "../websocket/ioInstance";
 
 export async function register(req: Request, res: Response) {
   try {
@@ -24,7 +27,7 @@ export async function register(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
+    const { email, password, force } = req.body;
 
     const user = await getUserByEmail(email);
 
@@ -33,7 +36,26 @@ export async function login(req: Request, res: Response) {
       return res.status(202).json({ response });
     }
 
+    if (user) {
+      const sessionActive = await hasSession(user.id);
+      if (sessionActive && !force) {
+        return res.status(409).json({ error: "ALREADY_ACTIVE" });
+      }
+      if (sessionActive && force) {
+        const io = getIo();
+        if (io) {
+          io.to(`user:${user.id}`).emit("sessionKicked");
+        }
+        await clearSession(user.id);
+      }
+    }
+
     const response = await loginUser(email, password);
+
+    if (user) {
+      await setSession(user.id);
+      touchUserActivity(user.id).catch(() => {});
+    }
 
     return res.status(200).json({
       message: "User Logged in Successfully",
@@ -41,6 +63,18 @@ export async function login(req: Request, res: Response) {
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
     });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+export async function logout(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user?.id;
+    if (userId) {
+      await clearSession(userId);
+    }
+    return res.status(200).json({ message: "Logged out" });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }

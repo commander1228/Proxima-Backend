@@ -16,10 +16,6 @@ export class VoteService {
       throw new Error("values not 1 or -1 not supported");
     }
 
-    if ( vote.userId == vote.targetId) {
-      throw new Error("user cannot vote on this message");
-    }
-
     return await this.dao.createOrUpdateVote(vote);
   }
 
@@ -31,7 +27,19 @@ export class VoteService {
     return await this.dao.getVote(vote);
   }
 
+  async getUserVoteValue(userId: number, targetId: number): Promise<number | null> {
+    return await this.dao.getUserVoteValue(userId, targetId);
+  }
+
+  async getUserVotesForTargets(userId: number, targetIds: number[]): Promise<Record<number, number>> {
+    return await this.dao.getUserVotesForTargets(userId, targetIds);
+  }
+
   async getVoteCount(targetId: number) {
     return await this.dao.getVoteCount(targetId);
+  }
+
+  async getVoteCountsBatch(targetIds: number[]): Promise<Record<number, number>> {
+    return await this.dao.getVoteCountsBatch(targetIds);
   }
 }

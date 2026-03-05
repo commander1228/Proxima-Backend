@@ -23,16 +23,56 @@ export class PostCommentDao{
 
     async getPostCommentsByPost(postId: number){
         return prisma.postComment.findMany({
-            where: {postId,deleted: false},
+            where: {
+                postId,
+                deleted: false,
+                commenter: { deleted: false },
+            },
             orderBy:{createdAt: "desc"},
-            include: {commenter: {select: {displayId: true,id : true}}}
+            select: {
+                id: true,
+                content: true,
+                imageUrl: true,
+                postId: true,
+                commenterId: true,
+                createdAt: true,
+                wasAnonymous: true,
+                commenter: { select: { displayId: true, id: true } },
+            },
         });
     }
 
-    async getPostCommentsByUser(userId:number){
+    async getCommentCountsBatch(postIds: number[]): Promise<Record<number, number>> {
+        if (postIds.length === 0) return {};
+        const results = await prisma.postComment.groupBy({
+            by: ["postId"],
+            where: { postId: { in: postIds }, deleted: false },
+            _count: { id: true },
+        });
+        const map: Record<number, number> = {};
+        for (const r of results) {
+            map[r.postId] = r._count.id;
+        }
+        return map;
+    }
+
+    async getPostCommentsByUser(userId: number) {
         return prisma.postComment.findMany({
-            where: {commenterId : userId, deleted:false},
-            orderBy:{createdAt: "desc"}
+            where: {
+                commenterId: userId,
+                deleted:     false,
+                post:        { deleted: false },
+            },
+            select: {
+                id:        true,
+                content:   true,
+                imageUrl:  true,
+                createdAt: true,
+                post: {
+                    select: { id: true, title: true, locationId: true },
+                },
+            },
+            orderBy: { createdAt: "desc" },
         });
     }
 }

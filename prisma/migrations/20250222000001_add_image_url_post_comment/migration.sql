@@ -1,0 +1,1 @@
+ALTER TABLE "PostComment" ADD COLUMN "imageUrl" TEXT;

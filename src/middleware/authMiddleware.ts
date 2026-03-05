@@ -36,7 +36,7 @@ export async function authenticateAdmin(
   res: Response,
   next: NextFunction,
 ) {
-  if (req.user?.isAdmin == false) {
+  if (!req.user?.isAdmin) {
     return res.status(403).json({ message: "user does not have permission" });
   }
   next();

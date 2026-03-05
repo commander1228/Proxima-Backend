@@ -42,31 +42,81 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
       });
   }
 
-  async getMessageCountByUser(senderId: number): Promise<number> {
-    return prisma.chatRoomMessage
-      .findMany({
-        where: { senderId: senderId },
-      })
-      .then((result)=> result.length);
-  }
+async getMessageCountByUser(senderId: number): Promise<number> {
+  return prisma.chatRoomMessage.count({
+    where: { senderId },
+  });
+}
 
   async createChatRoomMessage(
     chatRoomId: number,
     senderId: number,
     content: string,
+    imageUrl?: string,
+    replyToId?: number,
+    wasAnonymous?: boolean,
   ) {
     return prisma.chatRoomMessage.create({
       data: {
         chatRoomId,
         senderId,
         content,
+        imageUrl: imageUrl ?? null,
+        isReply: replyToId != null,
+        replyToId: replyToId ?? null,
+        wasAnonymous: wasAnonymous ?? false,
       },
       include: {
         sender: { select: { displayId: true } },
+        replyTo: {
+          select: {
+            id: true,
+            content: true,
+            deleted: true,
+            imageUrl: true,
+            sender: { select: { displayId: true } },
+          },
+        },
       },
     });
   }
 
+
+  async createChatRoomMessageLean(
+    chatRoomId: number,
+    senderId: number,
+    content: string,
+    imageUrl?: string,
+    replyToId?: number,
+    wasAnonymous?: boolean,
+  ) {
+    return prisma.chatRoomMessage.create({
+      data: {
+        chatRoomId,
+        senderId,
+        content,
+        imageUrl: imageUrl ?? null,
+        isReply: replyToId != null,
+        replyToId: replyToId ?? null,
+        wasAnonymous: wasAnonymous ?? false,
+      },
+    });
+  }
+
+  async getReplyDataById(replyToId: number) {
+    return prisma.chatRoomMessage.findUnique({
+      where: { id: replyToId },
+      select: {
+        id: true,
+        content: true,
+        deleted: true,
+        imageUrl: true,
+        wasAnonymous: true,
+        chatRoomId: true,
+        sender: { select: { displayId: true } },
+      },
+    });
+  }
 
   async deleteChatRoomMessagesByChatroom(chatroomId: number) {
     return prisma.chatRoomMessage.updateMany({
@@ -77,11 +127,36 @@ export class ChatRoomMessageDao extends AbstractMessageDao<ChatRoomMessage | nul
 
   async getLatestChatRoomMessagesByChatRoom(chatRoomId: number, count: number) {
     return prisma.chatRoomMessage.findMany({
-      where: { chatRoomId },
+      where: {
+        chatRoomId,
+        deleted: false,
+        sender: { deleted: false },
+      },
       orderBy: { createdAt: "desc" },
       take: count,
-      include: {
+      select: {
+        id: true,
+        createdAt: true,
+        content: true,
+        imageUrl: true,
+        chatRoomId: true,
+        senderId: true,
+        isReply: true,
+        replyToId: true,
+        deleted: true,
+        wasAnonymous: true,
+        moderationStatus: true,
         sender: { select: { displayId: true, deleted: true } },
+        replyTo: {
+          select: {
+            id: true,
+            content: true,
+            deleted: true,
+            imageUrl: true,
+            wasAnonymous: true,
+            sender: { select: { displayId: true } },
+          },
+        },
       },
     });
   }

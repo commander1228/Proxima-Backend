@@ -5,9 +5,11 @@ import {
   refresh,
   sendOneTimeVerificationCode,
   verifyCode,
+  logout,
 } from "../controllers/authController";
 import { body } from "express-validator";
 import { validateRequest } from "../middleware/validateRequest";
+import { authenticateToken } from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -44,5 +46,7 @@ router.post("/send-code", sendOneTimeVerificationCode);
 router.post("/verify-code", verifyCode);
 
 router.post("/refresh", refresh);
+
+router.post("/logout", authenticateToken, logout);
 
 export default router;

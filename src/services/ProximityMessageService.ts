@@ -24,17 +24,45 @@ export class ProximityMessageService extends AbstractMessageService<ProximityMes
     return proximityMessageDao.deleteMessageByUser(senderId);
   }
 
+  async getMessageCountByUser(userId: number): Promise<number> {
+    return proximityMessageDao.getMessageCountByUser(userId);
+  }
+
+  async createFast(
+    senderId: number,
+    content: string,
+    latitude: number,
+    longitude: number,
+    imageUrl?: string,
+    replyToId?: number,
+  ) {
+    return proximityMessageDao.createProximityMessageLean(
+      senderId,
+      content,
+      latitude,
+      longitude,
+      imageUrl,
+      replyToId,
+    );
+  }
+
+  async getReplyDataById(messageId: number) {
+    return proximityMessageDao.getReplyDataById(messageId);
+  }
+
   async createProximityMessage(
     senderId: number,
     content: string,
     latitude: number,
     longitude: number,
+    imageUrl?: string,
   ) {
     return await proximityMessageDao.createProximityMessage(
       senderId,
       content,
       latitude,
       longitude,
+      imageUrl,
     );
   }
 }

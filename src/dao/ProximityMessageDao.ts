@@ -35,20 +35,61 @@ export class ProximityMessageDao extends AbstractMessageDao<ProximityMessage | n
       .then((result) => result.count);
   }
 
+  async getMessageCountByUser(senderId: number): Promise<number> {
+    return prisma.proximityMessage.count({
+      where: { senderId },
+    });
+  }
+
   async createProximityMessage(
     senderId: number,
     content: string,
     latitude: number,
     longitude: number,
+    imageUrl?: string,
   ) {
     return prisma.proximityMessage.create({
       data: {
         senderId,
         content,
+        imageUrl: imageUrl ?? null,
         latitude,
         longitude,
       },
       include: {
+        sender: { select: { displayId: true } },
+      },
+    });
+  }
+
+  async createProximityMessageLean(
+    senderId: number,
+    content: string,
+    latitude: number,
+    longitude: number,
+    imageUrl?: string,
+    replyToId?: number,
+  ) {
+    return prisma.proximityMessage.create({
+      data: {
+        senderId,
+        content,
+        imageUrl: imageUrl ?? null,
+        latitude,
+        longitude,
+        replyToId: replyToId ?? null,
+      },
+    });
+  }
+
+  async getReplyDataById(messageId: number) {
+    return prisma.proximityMessage.findUnique({
+      where: { id: messageId },
+      select: {
+        id: true,
+        content: true,
+        imageUrl: true,
+        deleted: true,
         sender: { select: { displayId: true } },
       },
     });

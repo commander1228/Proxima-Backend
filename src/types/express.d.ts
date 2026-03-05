@@ -1,10 +1,11 @@
+import { User, User_Settings } from "@prisma/client";
 
-import { User } from "@prisma/client";
+type UserWithPreferences = User & { preferences?: User_Settings | null };
 
 declare global {
   namespace Express {
     export interface Request {
-      user?: User;
+      user?: UserWithPreferences;
     }
   }
 }
@@ -14,14 +15,14 @@ export {};
 declare global {
   namespace SocketIO {
     interface Socket {
-      user?: User;
+      user?: UserWithPreferences;
     }
   }
 }
 
-// For socket.io v4+, the correct way is:
+// For socket.io v4+:
 declare module "socket.io" {
   interface Socket {
-    user?: User;
+    user?: UserWithPreferences;
   }
 }

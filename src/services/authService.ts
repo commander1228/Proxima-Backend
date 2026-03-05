@@ -15,7 +15,7 @@ import redis from "../utils/setupRedis";
 
 const resend = new Resend(process.env.EMAIL_API_KEY!);
 const OTPValidTime = Number(process.env.OTP_TIL_SEC) || 300;
-const OTPMaxAttempts = Number(process.env.OTP_MAX_ATTEMPTS) || 300;
+const OTPMaxAttempts = Number(process.env.OTP_MAX_ATTEMPTS) || 10;
 const OTPRateLimit = Number(process.env.OTP_RATE_LIMIT) || 300;
 
 export async function registerUser(

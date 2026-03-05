@@ -11,29 +11,55 @@ model User {
   id                      Int                   @id @default(autoincrement())
   createdAt               DateTime              @default(now())
   email                   String                @unique
-  displayId               String
+  displayId               String                @unique
   karma                   Int                   @default(0)
   isAdmin                 Boolean               @default(false)
   password                String
   deleted                 Boolean               @default(false)
   isVerified              Boolean               @default(false)
+  suspendedUntil          DateTime?
+  suspendedContentPreview String?
   ChatRoomMessages        ChatRoomMessage[]
   ProximityMessages       ProximityMessage[]
   ChatRoomMessageVotes    ChatRoomMessageVote[]
   PostVotes               PostVote[]
   PostCommentMessageVotes PostCommentVote[]
 
+  lastActiveAt            DateTime              @default(now())
+
   preferences      User_Settings?
   FeedbackMessages FeedbackMessage[]
   posts            Post[]
+  blocksGiven      UserBlock[] @relation("BlocksMade")
+  blocksReceived   UserBlock[] @relation("BlocksReceived")
   postComments     PostComment[]
+  pushTokens       PushToken[]
+  notifications    Notification[]
+  sentLogs         NotificationSentLog[]
+  mutedLocations   MutedLocation[]
 }
 
 model User_Settings {
-  id              Int   @id @default(autoincrement())
-  userId          Int   @unique
-  proximityRadius Int   @default(1600)
-  user            User? @relation(fields: [userId], references: [id])
+  id              Int     @id @default(autoincrement())
+  userId          Int     @unique
+  proximityRadius Int     @default(1609)
+  feedRadius      Int     @default(8047)  // 5 miles in metres
+  anonymousMode         Boolean @default(true)
+  notifComments         Boolean @default(true)
+  notifKarma            Boolean @default(true)
+  notifInactiveReminder Boolean @default(true)
+  user                  User?   @relation(fields: [userId], references: [id])
+}
+
+// ─── Moderation ──────────────────────────────────────────────────────────────
+// Tracks the AI moderation lifecycle for every piece of user-generated content.
+// PENDING  → just created, waiting for the background worker to check it.
+// APPROVED → the OpenAI moderation API said it's safe.
+// REJECTED → the AI flagged it; the content has been "ghost deleted."
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum LocationType {
@@ -57,37 +83,60 @@ model Location {
   type      LocationType @default(NONE)
   chatRooms ChatRoom[]
   posts     Post[]
+  mutedBy   MutedLocation[]
 
   @@index([latitude, longitude])
   @@index([type])
+  @@index([deleted])
+  @@index([name, deleted])
+}
+
+model MutedLocation {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  locationId Int
+  locationName String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, locationId])
+  @@index([userId])
 }
 
 model Post {
-  id         Int           @id @default(autoincrement())
-  createdAt  DateTime      @default(now())
-  title      String
-  content    String
-  posterId   Int
-  locationId Int
-  deleted    Boolean       @default(false)
-  location   Location      @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  poster     User          @relation(fields: [posterId], references: [id])
-  comments   PostComment[]
-  votes      PostVote[]
+  id               Int              @id @default(autoincrement())
+  createdAt        DateTime         @default(now())
+  title            String
+  content          String?
+  imageUrl         String?
+  posterId         Int
+  locationId       Int
+  deleted          Boolean          @default(false)
+  wasAnonymous     Boolean          @default(false)
+  moderationStatus ModerationStatus @default(PENDING)
+  location         Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  poster           User             @relation(fields: [posterId], references: [id])
+  comments         PostComment[]
+  votes            PostVote[]
 
   @@index(locationId)
+  @@index([locationId, deleted, createdAt(sort: Desc)])
 }
 
 model PostComment {
-  id          Int               @id @default(autoincrement())
-  createdAt   DateTime          @default(now())
-  content     String
-  postId      Int
-  commenterId Int
-  deleted     Boolean           @default(false)
-  post        Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
-  commenter   User              @relation(fields: [commenterId], references: [id])
-  votes       PostCommentVote[]
+  id               Int               @id @default(autoincrement())
+  createdAt        DateTime          @default(now())
+  content          String?
+  imageUrl         String?
+  postId           Int
+  commenterId      Int
+  deleted          Boolean           @default(false)
+  wasAnonymous     Boolean           @default(false)
+  moderationStatus ModerationStatus  @default(PENDING)
+  post             Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commenter        User              @relation(fields: [commenterId], references: [id])
+  votes            PostCommentVote[]
 
   @@index(postId)
 }
@@ -102,6 +151,7 @@ model PostVote {
   post      Post     @relation(fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([userId, targetId])
+  @@index([targetId])
 }
 
 model PostCommentVote {
@@ -114,6 +164,7 @@ model PostCommentVote {
   post      PostComment @relation(fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([userId, targetId])
+  @@index([targetId])
 }
 
 model ChatRoom {
@@ -122,24 +173,32 @@ model ChatRoom {
   name       String
   deleted    Boolean           @default(false)
   locationId Int
-  location   Location          @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  location   Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
   messages   ChatRoomMessage[]
 
   @@index([locationId])
 }
 
 model ChatRoomMessage {
-  id         Int                   @id @default(autoincrement())
-  createdAt  DateTime              @default(now())
-  content    String
-  chatRoomId Int
-  senderId   Int
-  isReply    Boolean               @default(false)
-  replyToId  Int?
-  deleted    Boolean               @default(false)
-  chatRoom   ChatRoom              @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  sender     User                  @relation(fields: [senderId], references: [id])
-  votes      ChatRoomMessageVote[]
+  id               Int                   @id @default(autoincrement())
+  createdAt        DateTime              @default(now())
+  content          String
+  imageUrl         String?
+  chatRoomId       Int
+  senderId         Int
+  isReply          Boolean               @default(false)
+  replyToId        Int?
+  deleted          Boolean               @default(false)
+  wasAnonymous     Boolean               @default(false)
+  moderationStatus ModerationStatus      @default(PENDING)
+  chatRoom         ChatRoom              @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender           User                  @relation(fields: [senderId], references: [id])
+  replyTo          ChatRoomMessage?      @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies          ChatRoomMessage[]     @relation("MessageReplies")
+  votes            ChatRoomMessageVote[]
+
+  @@index([chatRoomId, createdAt])
+  @@index([senderId])
 }
 
 model ChatRoomMessageVote {
@@ -152,17 +211,25 @@ model ChatRoomMessageVote {
   message   ChatRoomMessage @relation(fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([userId, targetId])
+  @@index([targetId])
 }
 
 model ProximityMessage {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  content   String
-  senderId  Int
-  deleted   Boolean  @default(false)
-  latitude  Float
-  longitude Float
-  sender    User     @relation(fields: [senderId], references: [id])
+  id               Int              @id @default(autoincrement())
+  createdAt        DateTime         @default(now())
+  content          String
+  imageUrl         String?
+  senderId         Int
+  deleted          Boolean          @default(false)
+  moderationStatus ModerationStatus @default(PENDING) // ← NEW: tracks AI moderation state
+  latitude         Float
+  longitude        Float
+  replyToId        Int?
+  sender           User             @relation(fields: [senderId], references: [id])
+  replyTo          ProximityMessage?  @relation("ProximityReply", fields: [replyToId], references: [id])
+  replies          ProximityMessage[] @relation("ProximityReply")
+
+  @@index([senderId])
 }
 
 enum FeedbackCategory {
@@ -193,4 +260,118 @@ model FeedbackMessage {
 
   @@index([category])
   @@index([userId])
+}
+
+model UserBlock {
+  id        Int      @id @default(autoincrement())
+  blockerId Int
+  blockedId Int
+  createdAt DateTime @default(now())
+  blocker   User     @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+// ─── Reporting ────────────────────────────────────────────────────────────────
+
+enum ContentType {
+  POST
+  POST_COMMENT
+  CHAT_MESSAGE
+  PROXIMITY_MESSAGE
+}
+
+model Report {
+  id Int @id @default(autoincrement())
+
+  reporterId Int
+
+  reportedUserId        Int
+  reportedUserDisplayId String
+
+  contentType ContentType
+  contentId   Int
+
+  content  String?
+  imageUrl String?
+
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([reporterId, contentType, contentId])
+
+  @@index([contentType, contentId])
+  @@index([reportedUserId])
+  @@index([resolved])
+}
+
+// ─── Moderation Audit Log ────────────────────────────────────────────────────
+// Every time the AI moderation worker processes a piece of content, it writes a
+// row here. This gives you a full audit trail — useful for debugging false
+// positives, analytics dashboards, and compliance.
+model ModerationLog {
+  id          Int         @id @default(autoincrement())
+  contentType ContentType // POST, POST_COMMENT, CHAT_MESSAGE, PROXIMITY_MESSAGE
+  contentId   Int         // The ID of the content that was checked
+  userId      Int         // The user who created the content
+  flagged     Boolean     // true = OpenAI said it's toxic
+  categories  Json?       // Raw OpenAI category flags  (e.g. { "hate": true, "violence": false })
+  scores      Json?       // Raw OpenAI category scores (e.g. { "hate": 0.93, "violence": 0.01 })
+  processedAt DateTime    @default(now())
+
+  @@index([contentType, contentId])
+  @@index([userId])
+  @@index([flagged])
+}
+
+// ─── Push Notifications ─────────────────────────────────────────────────────
+// Stores Expo push tokens so the server can send native push notifications.
+// One user can have multiple tokens (multiple devices).
+
+model PushToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  platform  String   @default("unknown")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── In-App Notifications ───────────────────────────────────────────────────
+// Every notification (push + in-app) gets logged here so users can see a
+// notification history screen and we can track read/unread state.
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // e.g. "NEW_COMMENT", "KARMA_MILESTONE", "INACTIVE_REMINDER"
+  title     String
+  body      String
+  data      Json?    // optional payload (postId, etc.) for deep-linking
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+}
+
+// ─── Notification Deduplication ─────────────────────────────────────────────
+// Prevents the same notification from being sent twice. Each "ruleKey" is a
+// unique string like "karma_milestone:post:42:15" so we only congratulate a
+// user once per milestone per post.
+
+model NotificationSentLog {
+  id      Int      @id @default(autoincrement())
+  ruleKey String
+  userId  Int
+  sentAt  DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ruleKey, userId])
 }
